@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>2D rendering</title>
+    <style>
+		            body {
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                overflow: hidden;
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+	</style>
+      <script src="VivaGraphJS/dist/vivagraph.min.js"></script>
+      <script>
+      var main;
+      </script>
+      <!-- toggle between bundle2D and bundle2DIterative to visualise either one -->
+      <!-- to update each bundle, use 'browserify index2D.js -o bundle2D.js' -->
+      <script type="text/javascript" src="bundle2DIterative.js"> </script>
+      
+</head>
+<body onload="main();">
+
+</body>
+</html>
