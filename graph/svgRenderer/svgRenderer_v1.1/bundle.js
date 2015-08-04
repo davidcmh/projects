@@ -82,7 +82,7 @@ for (var i = 0; i < numEdges; i++) {
 
 
 console.log("Time before rendering: " + window.performance.now());
-
+window.performance.mark("mark_before_append");
 // rendering
 
 // render edges
@@ -107,9 +107,20 @@ nodesArr.forEach(function(d) {
     ;
 });
 
+window.performance.mark("mark_after_append");
 
+window.performance.measure("measure_append", "mark_before_append", "mark_after_append");
 console.log("Time after rendering: " + window.performance.now());
 
+
+var mark_all = window.performance.getEntriesByType("mark");
+
+var measure_all = window.performance.getEntriesByType("measure");
+
+console.log("All marks are: " );
+console.log(mark_all);
+console.log("All measures are: ");
+console.log(measure_all);
 
 },{"./svg.js":7,"simplesvg":2}],2:[function(require,module,exports){
 module.exports = svg;
