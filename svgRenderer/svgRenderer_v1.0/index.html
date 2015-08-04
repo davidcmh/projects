@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+    <svg width="640" height="320">
+        <line x1="160" y1="80" x2="480" y2="240" stroke="grey" stroke-width="2" />
+        <circle cx="160" cy="80" r="40" fill="teal" />
+        <circle cx="480" cy="240" r="40" fill="teal" />
+
+    </svg>
+    <br>
+
+    <svg width="320" height="320">
+        <line x1="160" y1="80" x2="480" y2="240" stroke="grey" stroke-width="2" />
+        <circle cx="160" cy="80" r="40" fill="teal" />
+    </svg>
+    <br>
+
+    <svg width="320" height="320">
+        <g transform="matrix(1,0,0,1,-320,0)">
+            <line x1="160" y1="80" x2="480" y2="240" stroke="grey" stroke-width="2" />
+            <circle cx="480" cy="240" r="40" fill="teal" />
+        </g>
+    </svg>
+    
+    <div id = "testing"></div>
+    <script src="bundle.js"></script>
+    
+</body>
+
+</html>
