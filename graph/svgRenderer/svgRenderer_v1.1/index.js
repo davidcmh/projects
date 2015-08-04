@@ -74,16 +74,13 @@ for (var i = 0; i < numEdges; i++) {
     }
     while(checkDuplicate(edgesArr, edge));  // if there is duplicate, regenerate the edge
 
-    console.log("edge: " + edge);
-    console.log("edgesArr: " + edgesArr);
-
     edgesArr.push(edge);
 }
 
 
 
 
-
+console.log("Time before rendering: " + window.performance.now());
 
 // rendering
 
@@ -110,4 +107,5 @@ nodesArr.forEach(function(d) {
 });
 
 
+console.log("Time after rendering: " + window.performance.now());
 
