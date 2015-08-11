@@ -1,80 +1,31 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var createGraph = require('ngraph.graph');
-var graph = createGraph();
+var g = createGraph();
 var svg = require('simplesvg');
 
 
-// set up data
+// get data from server
+function readFile(file) {
+    var xhr = new XMLHttpRequest();
 
+    xhr.onreadystatechange = function() {
 
-// set up nodes
-var numNodes = 20;
+        if (xhr.readyState==4 && xhr.status==200) {
+            console.log(xhr.responseText);
 
-/* handled by ngraph.graph automatically when adding links
- var nodesArr = [];
-
- for (var i = 0; i < numNodes; i++) {
- nodesArr.push([Math.floor(Math.random() * width), Math.floor(Math.random() * height)]);
- }
- */
-
-// edge iterator to check for duplicates
-var checkDuplicate = function (arr, edge) {
-    var duplicate = false;                     // set an extra variable because we cannot break from forEach loop
-    arr.forEach(function (d) {
-        if (+d[0] == +edge[0] && +d[1] == +edge[1]) {
-            duplicate = true;
-            return;   // cannot break it but we can return it
         }
-    });
-    return duplicate;
-};
-
-
-// TODO: improve edges data structure, use an adjacency matrix maybe?
-// set up edges
-var numEdges = 50;
-var edgesArr = [];
-
-for (var i = 0; i < numEdges; i++) {
-
-    var edge;
-
-    do {
-        var node1 = Math.floor(Math.random() * numNodes);
-        var node2 = Math.floor(Math.random() * numNodes);
-
-        while (node2 == node1) {
-            node2 = Math.floor(Math.random() * numNodes);
-        }
-
-        if (node1 > node2) {   // make node1 the smaller node, to simplify check later on
-            var temp = node1;
-            node1 = node2;
-            node2 = temp;
-        }
-
-        edge = [node1, node2];
 
     }
-    while (checkDuplicate(edgesArr, edge));  // if there is duplicate, regenerate the edge
 
-    edgesArr.push(edge);
+    xhr.open("GET", file, true);
+    xhr.send();
+
 }
 
+readFile("output.json");
 
-// add links to ngraph.graph data structure
-
-edgesArr.forEach(function (e) {
-    console.log("links: " + e[0] + ", " + e[1]);
-    graph.addLink(e[0], e[1]);
-});
-
-graph.forEachLink(function (link) {
-    console.dir(link);
-});
-
-
+/*
+// rendering
 // set up svgRoot
 var svgRoot = svg("svg");
 
@@ -82,15 +33,50 @@ document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitu
 
 
 // set up container for graph
-var width, height;
-width = document.body.clientWidth;
-height = document.body.clientHeight;
+
+var containerDimension = {
+    width: document.body.clientWidth,
+    height: document.body.clientHeight
+}
+
+var translate = { // -rect.x1 instead of Math.abs(rect.x1) because of the case where rect is fully inside container
+    x: -rect.x1 + (containerDimension.width / 2 - (rect.x2 - rect.x1) / 2),// first translate by smallest x, then translate by difference between centre of container and centre of rect
+    y: -rect.y1 + (containerDimension.height / 2 - (rect.y2 - rect.y1) / 2)
+};
 
 
-svgRoot.attr("width", width)
-    .attr("height", height);     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
+
+var scale = {
+    x: (containerDimension.width / (rect.x2 - rect.x1)),
+    y: (containerDimension.height / (rect.y2 - rect.y1))
+};
+
+
+console.log("containerDimension");
+console.log(containerDimension);
+console.log("rectDimension");
+console.log(rect);
+console.log("translate");
+console.log(translate);
+console.log("scale")
+console.log(scale);
+
+/* actually all the formulaes are the same, no need to split into cases
+ if (rect.x1 < 0 && rect.x2 < 0) {  // and assuming x1 is always < x2
+ translate.x = -(rect.x1) + (containerDimension.width/2 - (rect.x2 - rect.x1)/2);
+ } else if (rect.x1 < 0 && rect.x2 >= 0) {
+ translate.x = -(rect.x1) + (containerDimension.width/2 - (rect.x2 - rect.x1)/2);
+ } else {  // both are >= 0
+ translate.x = -rect.x1 + (containerDimension.width/2 - (rect.x2 - rect.x1)/2);
+ }
+ */
+/*
+
+svgRoot.attr("width", containerDimension.width)
+    .attr("height", containerDimension.height);     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
 
 var graph = svgRoot.append("g")
+    .attr("transform", "matrix(" + 0.5 + "," + 0 + ","  + 0 + "," + 0.5 + "," + translate.x + "," + translate.y + ")")   // scaling affects transformation
     .attr("class", "graph")
     .attr("buffered-rendering", "static");
 
@@ -100,26 +86,41 @@ window.performance.mark("mark_before_append");
 // rendering
 
 // render edges
-edgesArr.forEach(function (d) {
+g.forEachLink(function (link) {
+    var pos = layout.getLinkPosition(link.id);
     graph.append("line")
-        .attr("x1", nodesArr[d[0]][0])   // if node1 in edge is 15, this will be nodesArr[15][0], to access x coord of node 15; internal d[0] refers to node1
-        .attr("y1", nodesArr[d[0]][1])
-        .attr("x2", nodesArr[d[1]][0])
-        .attr("y2", nodesArr[d[1]][1])
+        .attr("x1", pos.from.x)   // if node1 in edge is 15, this will be nodesArr[15][0], to access x coord of node 15; internal d[0] refers to node1
+        .attr("y1", pos.from.y)
+        .attr("x2", pos.to.x)
+        .attr("y2", pos.to.y)
         .attr("stroke-width", 1)
         .attr("stroke", "#B8B8B8 ");
 });
 
 
 // render nodes
-nodesArr.forEach(function (d) {
+
+g.forEachNode(function (node) {
+    var pos = layout.getNodePosition(node.id);
     graph.append("circle")
         .attr("r", 5)
-        .attr("cx", d[0])
-        .attr("cy", d[1])
+        .attr("cx", pos.x)
+        .attr("cy", pos.y)
         .attr("fill", "teal")
     ;
+
+    graph.append("text")
+        .attr("x", pos.x)
+        .attr("y", pos.y)
+        .text("(" + (pos.x).toFixed(0) + ", " + (pos.y).toFixed(0) + ")")
+        .attr("font-size", 10);
+    ;
+
 });
+
+
+
+
 
 window.performance.mark("mark_after_append");
 
@@ -136,6 +137,7 @@ console.log(mark_all);
 console.log("All measures are: ");
 console.log(measure_all);
 
+*/
 },{"ngraph.graph":2,"simplesvg":4}],2:[function(require,module,exports){
 /**
  * @fileOverview Contains definition of the core graph object.
