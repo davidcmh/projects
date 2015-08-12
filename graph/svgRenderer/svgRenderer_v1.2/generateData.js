@@ -66,14 +66,14 @@ edgesArr.forEach(function (e) {
 
 
 // force directed layout
-var ITERATIONS_COUNT = 100;
+var ITERATIONS_COUNT = 1000;
 
 // Configure
 var physicsSettings = {
-    springLength: 30,
+    springLength: 100,
     springCoeff: 0.0008,
     gravity: -12,
-    theta: 0.8,
+    theta: 0.5,
     dragCoeff: 0.02,
     timeStep: 20
 };
@@ -92,16 +92,21 @@ var nodesArr = [];
 var linksArr = [];
 
 g.forEachNode(function (node) {
+    var nodePos = layout.getNodePosition(node.id);
+    nodePos.x += -rect.x1;    // align top left corner of force-generated graph to (0,0)
+    nodePos.y += -rect.y1;      // changing position of nodes auto changes the position of links attached to them
+// previously applied changes to links also, which is why the graph wasn't rendered properly, spent almost 45mins debugging that..
     nodesArr.push(
         {
             data:node.data,
             id: node.id,
-            pos: layout.getNodePosition(node.id)
+            pos: nodePos
         }
     )
 });
 
 g.forEachLink(function (link) {
+
     linksArr.push(
         {
             data: link.data,

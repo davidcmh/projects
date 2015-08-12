@@ -33,8 +33,7 @@ function renderInput(file) {
             var scaleDown = 0.9;
 
             nodes.forEach(function (node) {
-                node.pos.x += -rect.x1;    // align top left corner of force-generated graph to (0,0)
-                node.pos.y += -rect.y1;
+
 
                 node.pos.x *= scales.x * scaleDown;
                 node.pos.y *= scales.y * scaleDown;
@@ -45,12 +44,12 @@ function renderInput(file) {
 
             links.forEach(function (link) {
 
-
+/*
                 link.pos.from.x += -rect.x1;
                 link.pos.from.y += -rect.y1;
                 link.pos.to.x += -rect.x1;
                 link.pos.to.y += -rect.y1;
-
+*/
                 link.pos.from.x *= scales.x * scaleDown;
                 link.pos.from.y *= scales.y * scaleDown;
                 link.pos.to.x *= scales.x * scaleDown;
@@ -62,7 +61,7 @@ function renderInput(file) {
                 link.pos.to.y += containerDimension.height * (1 - scaleDown) / 2;
             });
 
-        
+
             // rendering
             // set up svgRoot
             var svgRoot = svg("svg");
