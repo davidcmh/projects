@@ -127,5 +127,6 @@ var data = {
     links: linksArr
 }
 
+// TODO: check whether to implement writeFileSync or simply writeFile
 var fs = require('fs');
 fs.writeFileSync("output.json", JSON.stringify(data));
