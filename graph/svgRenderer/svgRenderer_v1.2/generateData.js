@@ -86,7 +86,10 @@ for (var i = 0; i < ITERATIONS_COUNT; ++i) {
 
 
 var rect = layout.getGraphRect();   // get dimensions of bounding rect
-
+var rectDimension = {
+        width: rect.x2 - rect.x1,
+        height: rect.y2 - rect.y1
+    };
 
 var nodesArr = [];
 var linksArr = [];
@@ -98,7 +101,7 @@ g.forEachNode(function (node) {
 // previously applied changes to links also, which is why the graph wasn't rendered properly, spent almost 45mins debugging that..
     nodesArr.push(
         {
-            data:node.data,
+            data: node.data,
             id: node.id,
             pos: nodePos
         }
@@ -119,7 +122,7 @@ g.forEachLink(function (link) {
 
 
 var data = {
-    rectDimension: layout.getGraphRect(),
+    rectDimension: rectDimension,
     nodes: nodesArr,
     links: linksArr
 }
