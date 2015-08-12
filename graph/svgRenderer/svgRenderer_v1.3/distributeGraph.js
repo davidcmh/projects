@@ -8,7 +8,7 @@ var settings = {
 var data, nodes, links, rectDimension;
 
 var gdoDimension = {
-    row: 1,
+    row: 2,
     col: 2
 };
 
@@ -76,21 +76,7 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
     // split files based on no. of browsers
 
-    var browserDimension = {};  // an array of dimension for each browser
 
-    // TODO: compare efficiency between using array vs javascript object as data structure
-    // first get dimension of each individual browser
-    for (var i = 0; i < gdoDimension.row; ++i) {
-        browserDimension[i] = {};       // need to assign it to an empty object first, can't directly use [0][0]
-        for (var j = 0; j < gdoDimension.col; ++j) {
-            browserDimension[i][j] = {
-                x1: j * settings.defaultDisplayDimension.x,  // col num (j) multiplies by display width (note the inverse relationship, column multiples by width, not row multiples by width!)
-                y1: i * settings.defaultDisplayDimension.y,  // row num (i) multiplies by display height
-                x2: (j + 1) * settings.defaultDisplayDimension.x,
-                y2: (i + 1) * settings.defaultDisplayDimension.y
-            }
-        }
-    }
 
 
     // distribute data across different browsers
@@ -115,11 +101,11 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
     // distribute nodes
 
-    // check which browser a node belongs to
-    var checkBrowserPos = function (nodePos) {
+    // check which browser a point belongs to
+    var checkBrowserPos = function (pos) {
         return {
-            row: Math.floor(nodePos.y / settings.defaultDisplayDimension.y),  // be careful of the inversion btw x & y!
-            col: Math.floor(nodePos.x / settings.defaultDisplayDimension.x)
+            row: Math.floor(pos.y / settings.defaultDisplayDimension.y),  // be careful of the inversion btw x & y!
+            col: Math.floor(pos.x / settings.defaultDisplayDimension.x)
         }
 
     }
@@ -128,6 +114,74 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
         var nodeBrowserPos = checkBrowserPos(node.pos);
         graphData[nodeBrowserPos.row][nodeBrowserPos.col].nodes.push(node);
     });
+
+
+    // distribute links
+    links.forEach(function (link) {
+        var startPos, endPos;
+
+        // set starting point to the one with smaller x, without changing original data
+        if (link.pos.from.x > link.pos.to.x) {
+            startPos = link.pos.to;
+            endPos = link.pos.from;
+        } else {
+            startPos = link.pos.from;
+            endPos = link.pos.to;
+        }
+
+        var startBrowserPos = checkBrowserPos(startPos);
+        var endBrowserPos = checkBrowserPos(endPos);
+
+        // colDiff will always be >= 0, since we have set starting point's x to be smaller
+        // rowDiff may be < 0
+        var colDiff = endBrowserPos.col - startBrowserPos.col;
+        var rowDiff = endBrowserPos.row - startBrowserPos.row;
+
+        // set lines to check for intersection
+        var horizontalLines = [];  // y = a
+        var verticalLines = [];   // x = b
+
+        for (var i = 0; i < colDiff; ++i) {
+            horizontalLines.push((startBrowserPos.col + 1 + i) * settings.defaultDisplayDimension.x);
+        }
+
+        if (rowDiff > 0) {
+            for (var i = 0; i < rowDiff; ++i) {
+                verticalLines.push((startBrowserPos.row + 1 + i) * settings.defaultDisplayDimension.y);
+            }
+        } else if (rowDiff < 0) {
+            for (var i = rowDiff; i > 0; --i) {
+                verticalLines.push((startBrowserPos.row - i) * settings.defaultDisplayDimension.y);
+            }
+        }
+
+        // check for different cases & push link onto respective browser
+
+        // regardless of where the end point is, the starting browser definitely should have the link
+        // equivalently to basic case where colDiff == 0 && rowDiff == 0
+        graphData[startBrowserPos.row][startBrowserPos.col].nodes.push(link);
+
+        if (rowDiff != 0 && colDiff == 0) {
+            // no colDiff means all are on same column, but different rows
+            if (rowDiff > 0) {
+                for (var i = 0; i < rowDiff; ++i) {
+                    graphData[startBrowserPos.row + 1 + i][startBrowserPos.col].nodes.push(link);
+                }
+            } else { //rowDiff < 0
+                for (var i = rowDiff; i > 0; --i) {
+                    graphData[startBrowserPos.row - i][startBrowserPos.col].nodes.push(link);
+                }
+            }
+        } else if (rowDiff == 0 && colDiff != 0) {
+            for (var i = 0; i < colDiff; ++i) {
+                graphData[startBrowserPos.row][startBrowserPos.col + 1 + i].nodes.push(link);
+            }
+        } else if (rowDiff != 0 && colDiff != 0) {
+            // check for intersections & place into respective browsers
+        }
+
+    });
+
 
     // output data to files
     for (var i = 0; i < gdoDimension.row; ++i) {

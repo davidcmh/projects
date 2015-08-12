@@ -9,7 +9,7 @@ var settings = {
     }
 }
 
-renderInput("distributedData/0_1.json");
+renderInput("distributedData/1_1.json");
 
 // get data from server
 function renderInput(file) {

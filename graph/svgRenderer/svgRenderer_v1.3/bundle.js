@@ -24,7 +24,7 @@
                 svgElement.link(value);
             } else {
                 svgElement.attr(attributeName, value);
-            }
+    }
         }
 
         return svgElement;
@@ -97,7 +97,7 @@
             if (arguments.length) {
                 svgElement.setAttributeNS(xlinkns, "xlink:href", target);
                 return svgElement;
-            }
+    }
 
             return svgElement.getAttributeNS(xlinkns, "xlink:href");
         }
@@ -315,7 +315,7 @@ var settings = {
     }
 }
 
-        renderInput("distributedData/0_1.json");
+        renderInput("distributedData/1_1.json");
 
 // get data from server
         function renderInput(file) {
