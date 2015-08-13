@@ -106,7 +106,7 @@
             if (textContent !== undefined) {
                 svgElement.textContent = textContent;
                 return svgElement;
-            }
+    }
             return svgElement.textContent;
         }
     }
@@ -310,8 +310,8 @@
 // TODO: change dimension to width and height instead of x and y to make code clearer
 var settings = {
     defaultDisplayDimension: {
-        x: 1280,
-        y: 728
+        x: 800,
+        y: 500
     }
 }
 
@@ -355,7 +355,7 @@ var settings = {
             window.performance.mark("mark_before_append");
 
             // rendering
-            /*
+
              // render edges
              links.forEach(function(link) {
 
@@ -368,7 +368,7 @@ var settings = {
              .attr("stroke", "#B8B8B8 ");
              });
 
-             */
+
             // render nodes
 
             nodes.forEach(function (node) {

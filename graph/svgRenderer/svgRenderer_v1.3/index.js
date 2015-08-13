@@ -22,6 +22,10 @@ function renderInput(file) {
                 height: document.body.clientHeight
             }
 
+            // overwrite containerDimension TODO: Delete later!
+            containerDimension.width = 800;
+            containerDimension.height = 500;
+
             var scales = {
                 x: containerDimension.width / rectDimension.width,
                 y: containerDimension.height / rectDimension.height
