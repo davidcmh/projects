@@ -140,16 +140,16 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
         var verticalLines = [];   // x = b
 
         for (var i = 0; i < colDiff; ++i) {
-            horizontalLines.push((startBrowserPos.col + 1 + i) * settings.defaultDisplayDimension.x);
+            verticalLines.push((startBrowserPos.col + 1 + i) * settings.defaultDisplayDimension.x);
         }
 
         if (rowDiff > 0) {
             for (var i = 0; i < rowDiff; ++i) {
-                verticalLines.push((startBrowserPos.row + 1 + i) * settings.defaultDisplayDimension.y);
+                horizontalLines.push((startBrowserPos.row + 1 + i) * settings.defaultDisplayDimension.y);
             }
         } else if (rowDiff < 0) {
-            for (var i = rowDiff; i > 0; --i) {
-                verticalLines.push((startBrowserPos.row + 1 - i) * settings.defaultDisplayDimension.y);
+            for (var i = -rowDiff; i > 0; --i) {
+                horizontalLines.push((startBrowserPos.row + 1 - i) * settings.defaultDisplayDimension.y);
             }
         }
 
@@ -228,12 +228,6 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             for (var i = 0; i < intersections.length - 1; ++i) {  // intersections.length - 1 because the loop handles two intersections at a time
 
                 if (intersections[i].type == "vertical" && intersections[i + 1].type == "horizontal") {
-                    console.log("row: " + intersections[i].number);
-                    console.log("col: " + intersections[i + 1].number);
-                    console.log("pos.x: " + intersections[i].pos.x);
-                    console.log("pos.y: " + intersections[i].pos.y);
-
-
                     graphData[intersections[i].number][intersections[i + 1].number].links.push(link);
                 } else if (intersections[i].type == "horizontal" && intersections[i + 1].type == "vertical") {
                     graphData[intersections[i + 1].number][intersections[i].number].links.push(link);
