@@ -1,3 +1,13 @@
+/*
+ 1. Set up dimensions of individual display and overall display config
+ 2. Read file and get data: nodes, links, rectDimension
+ 3. Distribute graph
+ i. scale to overall dimension
+ ii. distribute nodes & links into each browser
+ iii. write data for individual browser into files
+ */
+
+
 var settings = {
     defaultDisplayDimension: {
         x: 800,
