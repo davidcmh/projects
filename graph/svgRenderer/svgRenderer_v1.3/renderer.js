@@ -1,15 +1,14 @@
 var svg = require('simplesvg');
 var data, nodes, links, browserPos;
 
-// TODO: change dimension to width and height instead of x and y to make code clearer
 var settings = {
     defaultDisplayDimension: {
-        x: 800,
-        y: 500
+        width: 1920,
+        height: 1080
     }
 }
 
-renderInput("distributedData/0_1.json");
+renderInput("distributedData/1_0.json");
 
 // get data from server
 function renderInput(file) {
@@ -24,9 +23,9 @@ function renderInput(file) {
             nodes = data.nodes;
             links = data.links;
 
-            var translate = {
-                    x: -(browserPos.col * settings.defaultDisplayDimension.x),
-                    y: -(browserPos.row * settings.defaultDisplayDimension.y)
+            var translate = { // translate is negative, to make the whole canvas towards (0,0)
+                    x: -(browserPos.col * settings.defaultDisplayDimension.width),
+                    y: -(browserPos.row * settings.defaultDisplayDimension.height)
                 }
                 ;
 
@@ -37,8 +36,8 @@ function renderInput(file) {
 
             document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
 
-            svgRoot.attr("width", settings.defaultDisplayDimension.x)
-                .attr("height", settings.defaultDisplayDimension.y);     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
+            svgRoot.attr("width", settings.defaultDisplayDimension.width)
+                .attr("height", settings.defaultDisplayDimension.height);     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
 
             var graph = svgRoot.append("g")
                 .attr("transform", "translate(" + translate.x + "," + translate.y + ")")
@@ -51,16 +50,16 @@ function renderInput(file) {
             // rendering
 
             // render edges
-             links.forEach(function(link) {
+            links.forEach(function (link) {
 
-             graph.append("line")
-             .attr("x1", link.pos.from.x)   // if node1 in edge is 15, this will be nodesArr[15][0], to access x coord of node 15; internal d[0] refers to node1
-             .attr("y1", link.pos.from.y)
-             .attr("x2", link.pos.to.x)
-             .attr("y2", link.pos.to.y)
-             .attr("stroke-width", 1)
-             .attr("stroke", "#B8B8B8 ");
-             });
+                graph.append("line")
+                    .attr("x1", link.pos.from.x)   // if node1 in edge is 15, this will be nodesArr[15][0], to access x coord of node 15; internal d[0] refers to node1
+                    .attr("y1", link.pos.from.y)
+                    .attr("x2", link.pos.to.x)
+                    .attr("y2", link.pos.to.y)
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "#B8B8B8 ");
+            });
 
 
             // render nodes
@@ -84,21 +83,16 @@ function renderInput(file) {
 
             });
 
-
+            // Performance measures
             window.performance.mark("mark_after_append");
-
             window.performance.measure("measure_append", "mark_before_append", "mark_after_append");
             //     console.log("Time after rendering: " + window.performance.now());
-
-
             var mark_all = window.performance.getEntriesByType("mark");
-
             var measure_all = window.performance.getEntriesByType("measure");
-
-//            console.log("All marks are: ");
-            //          console.log(mark_all);
-            //        console.log("All measures are: ");
-            //      console.log(measure_all);
+            // console.log("All marks are: ");
+            // console.log(mark_all);
+            // console.log("All measures are: ");
+            // console.log(measure_all);
 
         }
     }
