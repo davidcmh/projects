@@ -1,259 +1,118 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-    var svg = require('simplesvg');
-    var data, nodes, links, rectDimension;
+    module.exports = svg;
 
-// get data from server
-    function renderInput(file) {
-        var xhr = new XMLHttpRequest();
+    svg.compile = require('./lib/compile');
 
-        xhr.onreadystatechange = function () {
+    var compileTemplate = svg.compileTemplate = require('./lib/compile_template');
 
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                data = JSON.parse(xhr.responseText);
+    var domEvents = require('add-event-listener');
 
-                nodes = data.nodes;
-                links = data.links;
-                rectDimension = data.rectDimension;
+    var svgns = "http://www.w3.org/2000/svg";
+    var xlinkns = "http://www.w3.org/1999/xlink";
 
-
-                // transform data: instead of transforming SVG elements, transform coordinates instead
-                // also set up container for graph
-                var containerDimension = {
-                    width: document.body.clientWidth,
-                    height: document.body.clientHeight
-                }
-
-                // overwrite containerDimension TODO: Delete later!
-                containerDimension.width = 800;
-                containerDimension.height = 500;
-
-                var scales = {
-                    x: containerDimension.width / rectDimension.width,
-                    y: containerDimension.height / rectDimension.height
-                };
-
-
-                // scaleDown  makes the overall graph smaller and nearer to (0, 0)
-                var scaleDown = 0.9;
-
-                nodes.forEach(function (node) {
-
-                    node.pos.x *= scales.x * scaleDown;
-                    node.pos.y *= scales.y * scaleDown;
-
-                    node.pos.x += containerDimension.width * (1 - scaleDown) / 2;    // add padding to x & y to centralise graph
-                    node.pos.y += containerDimension.height * (1 - scaleDown) / 2;
-                });
-
-                links.forEach(function (link) {
-
-                    link.pos.from.x *= scales.x * scaleDown;
-                    link.pos.from.y *= scales.y * scaleDown;
-                    link.pos.to.x *= scales.x * scaleDown;
-                    link.pos.to.y *= scales.y * scaleDown;
-
-                    link.pos.from.x += containerDimension.width * (1 - scaleDown) / 2;
-                    link.pos.from.y += containerDimension.height * (1 - scaleDown) / 2;
-                    link.pos.to.x += containerDimension.width * (1 - scaleDown) / 2;
-                    link.pos.to.y += containerDimension.height * (1 - scaleDown) / 2;
-                });
-
-
-                // rendering
-                // set up svgRoot
-                var svgRoot = svg("svg");
-
-                document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
-
-                svgRoot.attr("width", containerDimension.width)
-                    .attr("height", containerDimension.height);     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
-
-                var graph = svgRoot.append("g")
-                    .attr("class", "graph");
-
-
-                //console.log("Time before rendering: " + window.performance.now());
-                window.performance.mark("mark_before_append");
-
-                // rendering
-
-                // render edges
-                links.forEach(function (link) {
-
-                    graph.append("line")
-                        .attr("x1", link.pos.from.x)   // if node1 in edge is 15, this will be nodesArr[15][0], to access x coord of node 15; internal d[0] refers to node1
-                        .attr("y1", link.pos.from.y)
-                        .attr("x2", link.pos.to.x)
-                        .attr("y2", link.pos.to.y)
-                        .attr("stroke-width", 1)
-                        .attr("stroke", "#B8B8B8 ");
-                });
-
-
-                // render nodes
-
-                nodes.forEach(function (node) {
-
-                    graph.append("circle")
-                        .attr("r", 5)
-                        .attr("cx", node.pos.x)
-                        .attr("cy", node.pos.y)
-                        .attr("fill", "teal")
-                    ;
-
-                    graph.append("text")
-                        .attr("x", node.pos.x)
-                        .attr("y", node.pos.y)
-                        .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
-                        .attr("font-size", 10);
-                    ;
-
-                });
-
-
-                window.performance.mark("mark_after_append");
-
-                window.performance.measure("measure_append", "mark_before_append", "mark_after_append");
-                //     console.log("Time after rendering: " + window.performance.now());
-
-
-                var mark_all = window.performance.getEntriesByType("mark");
-
-                var measure_all = window.performance.getEntriesByType("measure");
-
-//            console.log("All marks are: ");
-                //          console.log(mark_all);
-                //        console.log("All measures are: ");
-                //      console.log(measure_all);
-
+    function svg(element, attrBag) {
+        var svgElement = augment(element);
+        if (attrBag === undefined) {
+            return svgElement;
         }
 
+        var attributes = Object.keys(attrBag);
+        for (var i = 0; i < attributes.length; ++i) {
+            var attributeName = attributes[i];
+            var value = attrBag[attributeName];
+            if (attributeName === 'link') {
+                svgElement.link(value);
+            } else {
+                svgElement.attr(attributeName, value);
+            }
         }
 
-        xhr.open("GET", file, true);
-        xhr.send();
-
+        return svgElement;
     }
 
-    renderInput("output.json");
+    function augment(element) {
+        var svgElement = element;
 
+        if (typeof element === "string") {
+            svgElement = window.document.createElementNS(svgns, element);
+        } else if (element.simplesvg) {
+            return element;
+        }
 
-}, {"simplesvg": 2}],
-    2: [function (require, module, exports) {
-        module.exports = svg;
+        var compiledTempalte;
 
-        svg.compile = require('./lib/compile');
+        svgElement.simplesvg = true; // this is not good, since we are monkey patching svg
+        svgElement.attr = attr;
+        svgElement.append = append;
+        svgElement.link = link;
+        svgElement.text = text;
 
-        var compileTemplate = svg.compileTemplate = require('./lib/compile_template');
+        // add easy eventing
+        svgElement.on = on;
+        svgElement.off = off;
 
-        var domEvents = require('add-event-listener');
+        // data binding:
+        svgElement.dataSource = dataSource;
 
-        var svgns = "http://www.w3.org/2000/svg";
-        var xlinkns = "http://www.w3.org/1999/xlink";
+        return svgElement;
 
-        function svg(element, attrBag) {
-            var svgElement = augment(element);
-            if (attrBag === undefined) {
-                return svgElement;
-            }
+        function dataSource(model) {
+            if (!compiledTempalte) compiledTempalte = compileTemplate(svgElement);
+            compiledTempalte.link(model);
+            return svgElement;
+        }
 
-            var attributes = Object.keys(attrBag);
-            for (var i = 0; i < attributes.length; ++i) {
-                var attributeName = attributes[i];
-                var value = attrBag[attributeName];
-                if (attributeName === 'link') {
-                    svgElement.link(value);
+        function on(name, cb, useCapture) {
+            domEvents.addEventListener(svgElement, name, cb, useCapture);
+            return svgElement;
+        }
+
+        function off(name, cb, useCapture) {
+            domEvents.removeEventListener(svgElement, name, cb, useCapture);
+            return svgElement;
+        }
+
+        function append(content) {
+            var child = svg(content);
+            svgElement.appendChild(child);
+
+            return child;
+        }
+
+        function attr(name, value) {
+            if (arguments.length === 2) {
+                if (value !== null) {
+                    svgElement.setAttributeNS(null, name, value);
                 } else {
-                    svgElement.attr(attributeName, value);
+                    svgElement.removeAttributeNS(null, name);
                 }
+
+                return svgElement;
             }
 
-            return svgElement;
+            return svgElement.getAttributeNS(null, name);
         }
 
-        function augment(element) {
-            var svgElement = element;
-
-            if (typeof element === "string") {
-                svgElement = window.document.createElementNS(svgns, element);
-            } else if (element.simplesvg) {
-                return element;
-            }
-
-            var compiledTempalte;
-
-            svgElement.simplesvg = true; // this is not good, since we are monkey patching svg
-            svgElement.attr = attr;
-            svgElement.append = append;
-            svgElement.link = link;
-            svgElement.text = text;
-
-            // add easy eventing
-            svgElement.on = on;
-            svgElement.off = off;
-
-            // data binding:
-            svgElement.dataSource = dataSource;
-
-            return svgElement;
-
-            function dataSource(model) {
-                if (!compiledTempalte) compiledTempalte = compileTemplate(svgElement);
-                compiledTempalte.link(model);
+        function link(target) {
+            if (arguments.length) {
+                svgElement.setAttributeNS(xlinkns, "xlink:href", target);
                 return svgElement;
             }
 
-            function on(name, cb, useCapture) {
-                domEvents.addEventListener(svgElement, name, cb, useCapture);
+            return svgElement.getAttributeNS(xlinkns, "xlink:href");
+        }
+
+        function text(textContent) {
+            if (textContent !== undefined) {
+                svgElement.textContent = textContent;
                 return svgElement;
             }
-
-            function off(name, cb, useCapture) {
-                domEvents.removeEventListener(svgElement, name, cb, useCapture);
-                return svgElement;
-            }
-
-            function append(content) {
-                var child = svg(content);
-                svgElement.appendChild(child);
-
-                return child;
-            }
-
-            function attr(name, value) {
-                if (arguments.length === 2) {
-                    if (value !== null) {
-                        svgElement.setAttributeNS(null, name, value);
-                    } else {
-                        svgElement.removeAttributeNS(null, name);
-                    }
-
-                    return svgElement;
+            return svgElement.textContent;
+        }
     }
 
-                return svgElement.getAttributeNS(null, name);
-            }
-
-            function link(target) {
-                if (arguments.length) {
-                    svgElement.setAttributeNS(xlinkns, "xlink:href", target);
-                    return svgElement;
-                }
-
-                return svgElement.getAttributeNS(xlinkns, "xlink:href");
-            }
-
-            function text(textContent) {
-                if (textContent !== undefined) {
-                    svgElement.textContent = textContent;
-                    return svgElement;
-                }
-                return svgElement.textContent;
-            }
-}
-
-    }, {"./lib/compile": 3, "./lib/compile_template": 4, "add-event-listener": 6}],
-    3: [function (require, module, exports) {
+}, {"./lib/compile": 2, "./lib/compile_template": 3, "add-event-listener": 5}],
+    2: [function (require, module, exports) {
         var parser = require('./domparser.js');
         var svg = require('../');
 
@@ -281,8 +140,8 @@
             }
         }
 
-    }, {"../": 2, "./domparser.js": 5}],
-    4: [function (require, module, exports) {
+    }, {"../": 1, "./domparser.js": 4}],
+    3: [function (require, module, exports) {
         module.exports = template;
 
         var BINDING_EXPR = /{{(.+?)}}/;
@@ -314,7 +173,7 @@
                 var domChildren = domNode.childNodes;
                 for (i = 0; i < domChildren.length; ++i) {
                     extractAllBindings(domChildren[i], allBindings);
-                }
+    }
             }
 
             if (nodeType === 3) { // text:
@@ -378,7 +237,7 @@
         }
 
     }, {}],
-    5: [function (require, module, exports) {
+    4: [function (require, module, exports) {
         module.exports = createDomparser();
 
         function createDomparser() {
@@ -395,7 +254,7 @@
         }
 
     }, {}],
-    6: [function (require, module, exports) {
+    5: [function (require, module, exports) {
         addEventListener.removeEventListener = removeEventListener
         addEventListener.addEventListener = addEventListener
 
@@ -421,7 +280,7 @@
                 )
 
             return Events.rm(el, eventName, listener, useCapture)
-}
+        }
 
         function stdAttach(el, eventName, listener, useCapture) {
             el.addEventListener(eventName, listener, useCapture)
@@ -443,5 +302,112 @@
             el.detachEvent('on' + eventName, listener)
         }
 
-    }, {}]
-}, {}, [1]);
+    }, {}],
+    6: [function (require, module, exports) {
+        var svg = require('simplesvg');
+        var data, nodes, links, browserPos;
+
+        var settings = {
+            defaultDisplayDimension: {
+                width: 400,
+                height: 200
+            }
+}
+
+        renderInput("distributedData/2_2.json");
+
+// get data from server
+        function renderInput(file) {
+            var xhr = new XMLHttpRequest();
+
+            xhr.onreadystatechange = function () {
+
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    data = JSON.parse(xhr.responseText);
+
+                    browserPos = data.browserPos;
+                    nodes = data.nodes;
+                    links = data.links;
+
+                    var translate = { // translate is negative, to make the whole canvas towards (0,0)
+                            x: -(browserPos.col * settings.defaultDisplayDimension.width),
+                            y: -(browserPos.row * settings.defaultDisplayDimension.height)
+                }
+                        ;
+
+
+                    // rendering
+                    // set up svgRoot
+                    var svgRoot = svg("svg");
+
+                    document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
+
+                    svgRoot.attr("width", settings.defaultDisplayDimension.width)
+                        .attr("height", settings.defaultDisplayDimension.height);     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
+
+                    var graph = svgRoot.append("g")
+                        .attr("transform", "translate(" + translate.x + "," + translate.y + ")")
+                        .attr("class", "graph");
+
+
+                    //console.log("Time before rendering: " + window.performance.now());
+                    window.performance.mark("mark_before_append");
+
+                    // rendering
+
+                    // render edges
+                    links.forEach(function (link) {
+
+                        graph.append("line")
+                            .attr("x1", link.pos.from.x)   // if node1 in edge is 15, this will be nodesArr[15][0], to access x coord of node 15; internal d[0] refers to node1
+                            .attr("y1", link.pos.from.y)
+                            .attr("x2", link.pos.to.x)
+                            .attr("y2", link.pos.to.y)
+                            .attr("stroke-width", 1)
+                            .attr("stroke", "#B8B8B8 ");
+                    });
+
+
+                    // render nodes
+
+                    nodes.forEach(function (node) {
+                        console.log(node);
+
+                        graph.append("circle")
+                            .attr("r", 5)
+                            .attr("cx", node.pos.x)
+                            .attr("cy", node.pos.y)
+                            .attr("fill", "teal")
+                        ;
+
+                        graph.append("text")
+                            .attr("x", node.pos.x)
+                            .attr("y", node.pos.y)
+                            .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
+                            .attr("font-size", 10);
+                        ;
+
+                    });
+
+                    // Performance measures
+                    window.performance.mark("mark_after_append");
+                    window.performance.measure("measure_append", "mark_before_append", "mark_after_append");
+                    //     console.log("Time after rendering: " + window.performance.now());
+                    var mark_all = window.performance.getEntriesByType("mark");
+                    var measure_all = window.performance.getEntriesByType("measure");
+                    // console.log("All marks are: ");
+                    // console.log(mark_all);
+                    // console.log("All measures are: ");
+                    // console.log(measure_all);
+
+        }
+            }
+
+            xhr.open("GET", file, true);
+            xhr.send();
+
+}
+
+
+    }, {"simplesvg": 1}]
+}, {}, [6]);

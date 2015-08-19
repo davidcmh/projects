@@ -1,8 +1,11 @@
+var startTime = new Date();
+console.log("start: " + startTime.getTime());
+
 var createGraph = require('ngraph.graph');
 var g = createGraph();
 
 // set up nodes
-var numNodes = 100;
+var numNodes = 2;
 
 /* handled by ngraph.graph automatically when adding links
  var nodesArr = [];
@@ -24,10 +27,11 @@ var checkDuplicate = function (arr, edge) {
     return duplicate;
 };
 
+console.log("before generating edges: " + (new Date).getTime());
 
 // TODO: improve edges data structure, use an adjacency matrix maybe?
 // set up edges
-var numEdges = 150;
+var numEdges = 1;
 var edgesArr = [];
 
 for (var i = 0; i < numEdges; i++) {
@@ -56,13 +60,31 @@ for (var i = 0; i < numEdges; i++) {
     edgesArr.push(edge);
 }
 
+console.log("after generating edges: " + (new Date).getTime());
 
 // set up graph
 // add links to ngraph.graph data structure
 
+for (var i = 0; i < numNodes; i++) {
+    g.addNode(i);
+}
+
+
+
 edgesArr.forEach(function (e) {
     g.addLink(e[0], e[1]);    // each link object has attributes data, fromId and toId
 });
+
+/* output links and nodes
+ g.forEachNode(function(node) {
+ console.log(node);
+ });
+
+ g.forEachLink(function(link) {
+ console.log(link);
+ });
+
+ */
 
 
 // force directed layout
@@ -72,18 +94,18 @@ var ITERATIONS_COUNT = 1000;
 var physicsSettings = {
     springLength: 100,
     springCoeff: 0.0008,
-    gravity: -12,
+    gravity: 10,    // 0.1 not much difference from 0; 10/50/100 shows good dispersion; -12 makes it a hairball;
     theta: 0.5,
     dragCoeff: 0.02,
     timeStep: 20
 };
 
-
+console.log("before layout computation: " + (new Date).getTime());
 var layout = require('ngraph.forcelayout')(g, physicsSettings);
 for (var i = 0; i < ITERATIONS_COUNT; ++i) {
     layout.step();
 }
-
+console.log("after layout computation: " + (new Date).getTime());
 
 var rect = layout.getGraphRect();   // get dimensions of bounding rect
 var rectDimension = {
@@ -108,6 +130,8 @@ g.forEachNode(function (node) {
     )
 });
 
+console.log("after adding nodes to graph: " + (new Date).getTime());
+
 g.forEachLink(function (link) {
 
     linksArr.push(
@@ -120,6 +144,7 @@ g.forEachLink(function (link) {
     );
 });
 
+console.log("after adding links to graph: " + (new Date).getTime());
 
 var data = {
     rectDimension: rectDimension,
@@ -127,6 +152,15 @@ var data = {
     links: linksArr
 }
 
+//console.log(data.nodes.length);
+
 // TODO: check whether to implement writeFileSync or simply writeFile
 var fs = require('fs');
+console.log("before writing file: " + (new Date).getTime());
 fs.writeFileSync("output.json", JSON.stringify(data));
+console.log("after writing file: " + (new Date).getTime());
+
+
+var endTime = new Date();
+console.log("end: " + endTime.getTime());
+console.log("total time elapsed: " + (endTime - startTime));

@@ -3,6 +3,8 @@ var data, nodes, links, rectDimension;
 
 // get data from server
 function renderInput(file) {
+    console.log("Time when renderInput() is called: " + window.performance.now());
+
     var xhr = new XMLHttpRequest();
 
     xhr.onreadystatechange = function () {
@@ -22,9 +24,11 @@ function renderInput(file) {
                 height: document.body.clientHeight
             }
 
+            /*
             // overwrite containerDimension TODO: Delete later!
             containerDimension.width = 800;
             containerDimension.height = 500;
+             */
 
             var scales = {
                 x: containerDimension.width / rectDimension.width,
@@ -71,7 +75,7 @@ function renderInput(file) {
                 .attr("class", "graph");
 
 
-            //console.log("Time before rendering: " + window.performance.now());
+            console.log("Time before rendering: " + window.performance.now());
             window.performance.mark("mark_before_append");
 
             // rendering
@@ -94,12 +98,13 @@ function renderInput(file) {
             nodes.forEach(function (node) {
 
                 graph.append("circle")
-                    .attr("r", 5)
+                    .attr("r", 3)
                     .attr("cx", node.pos.x)
                     .attr("cy", node.pos.y)
                     .attr("fill", "teal")
                 ;
 
+                /*
                 graph.append("text")
                     .attr("x", node.pos.x)
                     .attr("y", node.pos.y)
@@ -107,23 +112,24 @@ function renderInput(file) {
                     .attr("font-size", 10);
                 ;
 
+                 */
             });
 
 
             window.performance.mark("mark_after_append");
 
             window.performance.measure("measure_append", "mark_before_append", "mark_after_append");
-            //     console.log("Time after rendering: " + window.performance.now());
+            console.log("Time after rendering: " + window.performance.now());
 
 
             var mark_all = window.performance.getEntriesByType("mark");
 
             var measure_all = window.performance.getEntriesByType("measure");
 
-//            console.log("All marks are: ");
-            //          console.log(mark_all);
-            //        console.log("All measures are: ");
-            //      console.log(measure_all);
+            console.log("All marks are: ");
+            console.log(mark_all);
+            console.log("All measures are: ");
+            console.log(measure_all);
 
         }
 

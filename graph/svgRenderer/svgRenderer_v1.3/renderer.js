@@ -3,12 +3,12 @@ var data, nodes, links, browserPos;
 
 var settings = {
     defaultDisplayDimension: {
-        width: 1920,
-        height: 1080
+        width: 400,
+        height: 200
     }
 }
 
-renderInput("distributedData/1_0.json");
+renderInput("distributedData/0_0.json");
 
 // get data from server
 function renderInput(file) {

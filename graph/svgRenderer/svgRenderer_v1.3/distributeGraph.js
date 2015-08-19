@@ -7,19 +7,19 @@
  iii. write data for individual browser into files
  */
 
-
+// TODO: change attributes of display dimension from x, y to width, height; which are more accurate descriptors
 var settings = {
     defaultDisplayDimension: {
-        x: 800,
-        y: 500
+        x: 400,
+        y: 200
     }
 }
 
 var data, nodes, links, rectDimension;
 
 var gdoDimension = {
-    row: 2,
-    col: 2
+    row: 3,
+    col: 3
 };
 
 var fs = require('fs');
@@ -89,11 +89,11 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
     // distribute data across different browsers
     // set up data structure to store data for each browser
-    var graphData = [];
+    var partitionData = [];
     for (var i = 0; i < gdoDimension.row; ++i) {
-        graphData[i] = {};
+        partitionData[i] = {};
         for (var j = 0; j < gdoDimension.col; ++j) {
-            graphData[i][j] = {
+            partitionData[i][j] = {
                 browserPos: {     // store position of browser
                     row: i,
                     col: j
@@ -120,7 +120,7 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
     nodes.forEach(function (node) {
         var nodeBrowserPos = checkBrowserPos(node.pos);
-        graphData[nodeBrowserPos.row][nodeBrowserPos.col].nodes.push(node);
+        partitionData[nodeBrowserPos.row][nodeBrowserPos.col].nodes.push(node);
     });
 
 
@@ -167,7 +167,7 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
         // regardless of where the end point is, the starting browser definitely should have the link
         // equivalently to basic case where colDiff == 0 && rowDiff == 0
-        graphData[startBrowserPos.row][startBrowserPos.col].links.push(link);
+        partitionData[startBrowserPos.row][startBrowserPos.col].links.push(link);
 
         // cases:
         // 1. both in the same browser
@@ -178,16 +178,16 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             // no colDiff means all are on same column, but different rows
             if (rowDiff > 0) {
                 for (var i = 0; i < rowDiff; ++i) {
-                    graphData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(link);
+                    partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(link);
                 }
             } else { //rowDiff < 0
                 for (var i = -rowDiff; i > 0; --i) {  // previous bug, didn't put - in front of rowDiff, this condition will always be false, since rowDiff is negative at the start
-                    graphData[startBrowserPos.row - i][startBrowserPos.col].links.push(link);
+                    partitionData[startBrowserPos.row - i][startBrowserPos.col].links.push(link);
                 }
             }
         } else if (rowDiff == 0 && colDiff != 0) {
             for (var i = 0; i < colDiff; ++i) {
-                graphData[startBrowserPos.row][startBrowserPos.col + 1 + i].links.push(link);
+                partitionData[startBrowserPos.row][startBrowserPos.col + 1 + i].links.push(link);
             }
         } else if (rowDiff != 0 && colDiff != 0) {
             // check for intersections & place into respective browsers
@@ -238,19 +238,21 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             for (var i = 0; i < intersections.length - 1; ++i) {  // intersections.length - 1 because the loop handles two intersections at a time
 
                 if (intersections[i].type == "vertical" && intersections[i + 1].type == "horizontal") {
-                    graphData[intersections[i].number][intersections[i + 1].number].links.push(link);
+                    partitionData[intersections[i].number][intersections[i + 1].number].links.push(link);
                 } else if (intersections[i].type == "horizontal" && intersections[i + 1].type == "vertical") {
-                    graphData[intersections[i + 1].number][intersections[i].number].links.push(link);
+                    partitionData[intersections[i + 1].number][intersections[i].number].links.push(link);
                 } else if (intersections[i].type == "vertical" && intersections[i + 1].type == "vertical") {
-                    graphData[intersections[i].number][intersections[i].pos.x / settings.defaultDisplayDimension.x].links.push(link);
+                    partitionData[intersections[i].number][intersections[i].pos.x / settings.defaultDisplayDimension.x].links.push(link);
                 } else if (intersections[i].type == "horizontal" && intersections[i + 1].type == "horizontal") {
-                    graphData[Math.min(intersections[i].pos.y, intersections[i + 1].pos.y) / settings.defaultDisplayDimension.y][intersections[i].number].links.push(link);
+                    // Math.min is used to find the smaller y and get its row
+                    partitionData[Math.min(intersections[i].pos.y, intersections[i + 1].pos.y) / settings.defaultDisplayDimension.y][intersections[i].number].links.push(link);
                 }
 
             }
             ;
 
-            graphData[endBrowserPos.row][endBrowserPos.col].links.push(link);
+            // 
+            partitionData[endBrowserPos.row][endBrowserPos.col].links.push(link);
 
         }
 
@@ -260,7 +262,7 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
     // output data to files
     for (var i = 0; i < gdoDimension.row; ++i) {
         for (var j = 0; j < gdoDimension.col; ++j) {
-            fs.writeFile("distributedData/" + i + "_" + j + ".json", JSON.stringify(graphData[i][j]));
+            fs.writeFile("distributedData/" + i + "_" + j + ".json", JSON.stringify(partitionData[i][j]));
         }
     }
 
