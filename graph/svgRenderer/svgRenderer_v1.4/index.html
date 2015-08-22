@@ -20,6 +20,8 @@
 
     </style>
     <script>
+
+        // renderLinks defined here, so its function defined in index.js/renderer.js can be accessed globally
         var renderLinks;
 
 
@@ -132,16 +134,35 @@
             var svgElement = document.getElementById("graph");
 
 
-            svgElement.setAttribute("viewBox", "160 100 640 400");
+            svgElement.setAttribute("viewBox", "320 200 640 400");
         };
 
         var zoomOut = function () {
             var svgElement = document.getElementById("graph");
 
 
-            svgElement.setAttribute("viewBox", "0 0 2560 1600");
+            svgElement.setAttribute("viewBox", "-640 -400 2560 1600");
         };
 
+
+        var highlight;
+
+        var removeHighlight = function () {
+            var dom = document.getElementById("highlight");
+
+            while (dom.firstChild) {
+                dom.removeChild(dom.firstChild);
+            }
+        }
+
+        /* canvas rendering test
+         var c=document.getElementById("canvasTest");
+         var ctx=c.getContext("2d");
+         ctx.beginPath();
+         ctx.moveTo(0,0);
+         ctx.lineTo(300,150);
+         ctx.stroke();
+         */
     </script>
 
 </head>
@@ -151,19 +172,24 @@
 
 <script src="bundle.js"></script>
 
-<button onclick="removeLinks()">Remove links</button>
 <button onclick="renderLinks()">Add links</button>
+<button onclick="removeLinks()">Remove links</button>
+
 
 <!-- this crashes the browser (maybe cos changing too many DOM elements)
 <button onclick="changeColour()">Change colour</button>
 -->
 
-<button onclick="panLeft()">Pan Left</button>
+<!-- <button onclick="panLeft()">Pan Left</button> -->
 
 <button onclick="zoomIn()">Zoom in</button>
 <button onclick="zoomOut()">Zoom out</button>
 
 <button onclick="addLog()">Add log</button>
+
+<button onclick="highlight()">Highlight nodes</button>
+<button onclick="removeHighlight()">Remove highlight</button>
+
 <br>
 
 <label>Links</label>

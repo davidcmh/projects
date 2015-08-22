@@ -1,7 +1,8 @@
 #SVG Renderer v1.4
 
-This version implements zooming & panning capabilities using svg-pan-zoom API by ariutta.
+This version experiments zooming & panning capabilities.
 
+It also tested panning with distributed rendering (i.e. loaded two files (with only one of them in view), and then pan across to see the other part)
 
 #Earlier versions:
 

@@ -69,34 +69,10 @@ function renderInput(file) {
 
             document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
 
-            /*
-
-             interactiveControl(svgRoot, {
-             viewportSelector: '.svg-pan-zoom_viewport'
-             , panEnabled: true
-             , controlIconsEnabled: false
-             , zoomEnabled: true
-             , dblClickZoomEnabled: true
-             , mouseWheelZoomEnabled: true
-             , preventMouseEventsDefault: true
-             , zoomScaleSensitivity: 0.2
-             , minZoom: 0.5
-             , maxZoom: 10
-             , fit: true
-             , contain: false
-             , center: true
-             , refreshRate: 'auto'
-             , beforeZoom: function(){}
-             , onZoom: function(){}
-             , beforePan: function(){}
-             , onPan: function(){}
-             , customEventsHandler: {}
-             });
-             */
 
             svgRoot.attr("width", "100%") //containerDimension.width
                 .attr("height", "100%")     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
-                //.attr("viewBox", "0 0 1280 800")
+                .attr("viewBox", "0 0 1280 800")    // this is accessed by pan; so needs to be defined at the start
                 .attr("id", "graph");
 
             var graph = svgRoot.append("g");
@@ -126,9 +102,18 @@ function renderInput(file) {
 
             // render nodes
 
+
+            var nodesDom = graph.append("g")
+                .attr("id", "nodes");
+
+
+            // create g to group a highlighted DOM
+            graph.append("g")
+                .attr("id", "highlight");
+
             nodes.forEach(function (node) {
 
-                graph.append("circle")
+                nodesDom.append("circle")
                     .attr("r", 3)
                     .attr("cx", node.pos.x)
                     .attr("cy", node.pos.y)
@@ -187,6 +172,23 @@ renderLinks = function () {
             .attr("stroke-width", 1)
             .attr("stroke", "#B8B8B8");
     });
+}
+
+highlight = function () {
+
+    console.log("highlight is called");
+
+    var highlightDom = document.getElementById("highlight");
+    for (var i = 0; i < 10; ++i) {
+        var node = nodes[i];
+        highlightDom.append("circle")
+            .attr("r", 3)
+            .attr("cx", node.pos.x)
+            .attr("cy", node.pos.y)
+            .attr("fill", "red")
+        ;
+    }
+
 }
 
 

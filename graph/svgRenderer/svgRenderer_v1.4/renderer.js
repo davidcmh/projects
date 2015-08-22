@@ -1,3 +1,6 @@
+// now supports reading two input files
+// TODO: refactor code
+
 var svg = require('simplesvg');
 var data, nodes, links, browserPos, graph;
 var xdata, xnodes, xlinks;
