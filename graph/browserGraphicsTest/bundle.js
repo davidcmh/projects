@@ -28,7 +28,7 @@
 // set up svgRoot
         var svgRoot = svg("svg");
 
-        document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
+        document.getElementById("graph").appendChild(svgRoot);  //getElementById( ) can be used to substitute body
 
 
 // set up container for graph
@@ -47,14 +47,15 @@
 
 // set up data
 
+        console.log(performance.now());
 // set up nodes
-        var numNodes = 1000000;
+        var numNodes = 100000;
         var nodesArr = [];
 
         for (var i = 0; i < numNodes; i++) {
             nodesArr.push([Math.floor(Math.random() * width), Math.floor(Math.random() * height)]);
         }
-
+        console.log(performance.now());
 
 // edge iterator to check for duplicates
         var checkDuplicate = function (arr, edge) {
@@ -118,14 +119,16 @@
 
 
 // render nodes
-        nodesArr.forEach(function (d) {
-            graph.append("circle")
-                .attr("r", 1)
-                .attr("cx", d[0])
-                .attr("cy", d[1])
-                .attr("fill", "teal")
-            ;
-        });
+        /*
+         nodesArr.forEach(function (d) {
+         graph.append("circle")
+         .attr("r", 1)
+         .attr("cx", d[0])
+         .attr("cy", d[1])
+         .attr("fill", "teal")
+         ;
+         });
+         */
 
         window.performance.mark("mark_after_append");
 
@@ -142,6 +145,37 @@
         console.log("All measures are: ");
         console.log(measure_all);
 
+
+        var start = null;
+        var element = document.getElementById("graph");
+
+        var i = 0;
+
+        function step(timestamp) {
+
+            if (!start) start = timestamp;
+            var progress = timestamp - start;
+
+            var j = i + 10;
+
+            for (; i < nodesArr.length && i < j; ++i) {
+                graph.append("circle")
+                    .attr("r", 1)
+                    .attr("cx", nodesArr[i][0])
+                    .attr("cy", nodesArr[i][1])
+                    .attr("fill", "teal")
+                ;
+            }
+
+            if (i < nodesArr.length) {
+                console.log("yes it's running");
+                window.requestAnimationFrame(step);
+            }
+        }
+
+//window.requestAnimationFrame(step);
+
+        step(0);
     }, {"simplesvg": 2}],
     2: [function (require, module, exports) {
         module.exports = svg;
@@ -230,10 +264,10 @@
                         svgElement.setAttributeNS(null, name, value);
                     } else {
                         svgElement.removeAttributeNS(null, name);
-                    }
+            }
 
                     return svgElement;
-                }
+        }
 
                 return svgElement.getAttributeNS(null, name);
             }
@@ -242,7 +276,7 @@
                 if (arguments.length) {
                     svgElement.setAttributeNS(xlinkns, "xlink:href", target);
                     return svgElement;
-                }
+        }
 
                 return svgElement.getAttributeNS(xlinkns, "xlink:href");
             }
@@ -304,8 +338,8 @@
 
                     function changeModel(setter) {
                         setter(model);
-                    }
-                }
+            }
+        }
             };
         }
 
