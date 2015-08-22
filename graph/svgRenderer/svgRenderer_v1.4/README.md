@@ -1,8 +1,10 @@
 #SVG Renderer v1.4
 
-This version experiments zooming & panning capabilities.
+This version experiments zooming & panning capabilities. It adds refinements in UI, which includes a different scheme and better user control.
 
 It also tested panning with distributed rendering (i.e. loaded two files (with only one of them in view), and then pan across to see the other part)
+
+
 
 #Earlier versions:
 
