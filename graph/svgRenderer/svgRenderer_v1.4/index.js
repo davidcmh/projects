@@ -22,7 +22,7 @@ function renderInput(file) {
             // also set up container for graph
             var containerDimension = {
                 width: document.body.clientWidth,
-                height: document.body.clientHeight - 200
+                height: document.body.clientHeight - 100
             }
 
             /*
@@ -70,9 +70,9 @@ function renderInput(file) {
             document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
 
 
-            svgRoot.attr("width", "100%") //containerDimension.width
-                .attr("height", "100%")     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
-                .attr("viewBox", "0 0 1280 800")    // this is accessed by pan; so needs to be defined at the start
+            svgRoot.attr("width", containerDimension.width) //containerDimension.width
+                .attr("height", containerDimension.height)     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
+                .attr("viewBox", "0 0 " + containerDimension.width + " " + containerDimension.height)    // this is accessed by pan; so needs to be defined at the start
                 .attr("id", "graph");
 
             var graph = svgRoot.append("g");
@@ -96,7 +96,7 @@ function renderInput(file) {
                     .attr("x2", link.pos.to.x)
                     .attr("y2", link.pos.to.y)
                     .attr("stroke-width", 1)
-                    .attr("stroke", "#B8B8B8 ");
+                    .attr("stroke", "#333"); //B8B8B8
             });
 
 
@@ -111,14 +111,29 @@ function renderInput(file) {
             graph.append("g")
                 .attr("id", "highlight");
 
+            graph.append("g")
+                .attr("id", "labels");
+
+
+            var r, g, b;  // r 50 g 100 b 0 (lime green); r 0 g 50 b 100 (nice blue); r 50, g 100, b 50 (pastel green)
+            r = 0;  //
+            g = 50;
+            b = 20;
+
             nodes.forEach(function (node) {
+
 
                 nodesDom.append("circle")
                     .attr("r", 3)
                     .attr("cx", node.pos.x)
                     .attr("cy", node.pos.y)
-                    .attr("fill", "teal")
+                    .attr("fill", "rgb(" + r + "," + g + "," + b + ")") //2B5D85(darker) C4FFF6 BCF5EC  A9DED9
                 ;
+
+                r += 2;
+                g += 2;
+                b += 2;
+
 
                 /*
                  graph.append("text")
@@ -170,9 +185,24 @@ renderLinks = function () {
             .attr("x2", link.pos.to.x)
             .attr("y2", link.pos.to.y)
             .attr("stroke-width", 1)
-            .attr("stroke", "#B8B8B8");
+            .attr("stroke", "#333");
     });
 }
+
+renderLabels = function () {
+    var labelsDom = document.getElementById("labels");
+
+    nodes.forEach(function (node) {
+
+        labelsDom.append("text")
+            .attr("x", node.pos.x + 2)
+            .attr("y", node.pos.y - 2)
+            .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
+            .attr("font-size", 10)
+            .attr("fill", "white");
+    });
+}
+
 
 highlight = function () {
 
@@ -185,7 +215,7 @@ highlight = function () {
             .attr("r", 3)
             .attr("cx", node.pos.x)
             .attr("cy", node.pos.y)
-            .attr("fill", "red")
+            .attr("fill", "#CF2331")
         ;
     }
 

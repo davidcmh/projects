@@ -6,16 +6,41 @@
         html, body {
             width: 100%;
             height: 100%;
-            background: white;
-            margin: 0;
-            padding: 0;
+            background: black;
             position: fixed;
+        }
+
+        body {
+            margin: 0;
+            padding-left: 2;
+            padding-right: 2;
 
         }
 
         #message_from_server {
-            height: 150px;
+            width: 99%;
+            height: 60px;
             overflow: auto;
+            color: #888;
+            margin-top: 2px;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: 5px;
+            margin-right: 0;
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+            font-family: "verdana";
+            font-size: 12px;
+        }
+
+        label {
+            font-family: "verdana";
+            font-size: 12px;
+            color: white;
+            margin-left: 5px;
         }
 
     </style>
@@ -30,6 +55,18 @@
 
             while (linksDom.firstChild) {
                 linksDom.removeChild(linksDom.firstChild);
+            }
+        }
+
+
+        var renderLabels;
+
+
+        var removeLabels = function () {
+            var labelsDom = document.getElementById("labels");
+
+            while (labelsDom.firstChild) {
+                labelsDom.removeChild(labelsDom.firstChild);
             }
         }
 
@@ -104,7 +141,7 @@
             var logDom = document.getElementById("message_from_server");
 
             var para = document.createElement("p");
-            para.textContent = "hello " + num++;
+            para.textContent = ">> Added log no. " + num++;
             logDom.appendChild(para);
             y += 30;
             //logDom.scrollIntoView(false);
@@ -134,14 +171,21 @@
             var svgElement = document.getElementById("graph");
 
 
-            svgElement.setAttribute("viewBox", "320 200 640 400");
+            svgElement.setAttribute("viewBox", document.body.clientWidth / 4 + " " + (document.body.clientHeight - 100) / 4 + " " + document.body.clientWidth / 2 + " " + (document.body.clientHeight - 100) / 2);
         };
 
         var zoomOut = function () {
             var svgElement = document.getElementById("graph");
 
 
-            svgElement.setAttribute("viewBox", "-640 -400 2560 1600");
+            svgElement.setAttribute("viewBox", -document.body.clientWidth / 2 + " " + -(document.body.clientHeight - 100) / 2 + " " + document.body.clientWidth * 2 + " " + (document.body.clientHeight - 100) * 2);
+        };
+
+        var resetZoom = function () {
+            var svgElement = document.getElementById("graph");
+
+
+            svgElement.setAttribute("viewBox", 0 + " " + 0 + " " + document.body.clientWidth + " " + (document.body.clientHeight - 100));
         };
 
 
@@ -172,9 +216,14 @@
 
 <script src="bundle.js"></script>
 
+<label>Links</label>
+<input type="checkbox" checked onchange="updateLinks()"> </input>
+
 <button onclick="renderLinks()">Add links</button>
 <button onclick="removeLinks()">Remove links</button>
 
+<button onclick="renderLabels()">Add labels</button>
+<button onclick="removeLabels()">Remove labels</button>
 
 <!-- this crashes the browser (maybe cos changing too many DOM elements)
 <button onclick="changeColour()">Change colour</button>
@@ -184,16 +233,12 @@
 
 <button onclick="zoomIn()">Zoom in</button>
 <button onclick="zoomOut()">Zoom out</button>
+<button onclick="resetZoom()">Reset zoom</button>
 
 <button onclick="addLog()">Add log</button>
 
 <button onclick="highlight()">Highlight nodes</button>
 <button onclick="removeHighlight()">Remove highlight</button>
-
-<br>
-
-<label>Links</label>
-<input type="checkbox" checked onchange="updateLinks()"> </input>
 
 
 <fieldset id="message_from_server"></fieldset>
