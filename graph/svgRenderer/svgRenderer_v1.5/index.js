@@ -1,28 +1,11 @@
 var svg = require('simplesvg');
 
 
-/* for reading binary files later on
- https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
-
- var oReq = new XMLHttpRequest();
- oReq.open("GET", "/myfile.png", true);
- oReq.responseType = "arraybuffer";
-
- oReq.onload = function (oEvent) {
- var arrayBuffer = oReq.response; // Note: not oReq.responseText
- if (arrayBuffer) {
- var byteArray = new Uint8Array(arrayBuffer);
- for (var i = 0; i < byteArray.byteLength; i++) {
- // do something with each byte in the array
- }
- }
- };
-
- oReq.send(null);
-
- */
+var nodes, links, graph, containerDimension, scales, scaleDown;  // defined globally so they can be accessed by other functions
+var nodesDom, linksDom;
 
 renderNodes("nodesPos.bin");
+getLinksAndRender("linksPos.bin");
 
 // new optimised rendering, to read from binary pos files
 function renderNodes(file) {
@@ -43,41 +26,29 @@ function renderNodes(file) {
             var rectDimension = [data[0], data[1]];
 
             // nodes = [[x, y, numLinks], [], ...]
-            var nodes = [];
+            nodes = [];
 
             for (var i = 2; i < data.length - 2; i += 3) {
                 nodes.push([data[i], data[i + 1], data[i + 2]]);
             }
 
-            /*
-             console.log("rectDimension width: " + rectDim[0]);
-             console.log("rectDimension height: " + rectDim[1]);
-             console.log("nodes length: " + nodes.length);
-             console.log("nodes data: ")
-             console.log(nodes);
-             */
 
             // transform data: instead of transforming SVG elements, transform coordinates instead
             // also set up container for graph
-            var containerDimension = {
+            containerDimension = {
                 width: document.body.clientWidth,
                 height: document.body.clientHeight - 100
             }
 
-            /*
-             // overwrite containerDimension TODO: Delete later!
-             containerDimension.width = 800;
-             containerDimension.height = 500;
-             */
 
-            var scales = {
+            scales = {
                 x: containerDimension.width / rectDimension[0],
                 y: containerDimension.height / rectDimension[1]
             };
 
 
             // scaleDown  makes the overall graph smaller and nearer to (0, 0)
-            var scaleDown = 0.9;
+            scaleDown = 0.9;
 
             nodes.forEach(function (node) {
 
@@ -101,7 +72,7 @@ function renderNodes(file) {
                 .attr("viewBox", "0 0 " + containerDimension.width + " " + containerDimension.height)    // this is accessed by pan; so needs to be defined at the start
                 .attr("id", "graph");
 
-            var graph = svgRoot.append("g");
+            graph = svgRoot.append("g");
 
 
             console.log("Time before rendering: " + window.performance.now());
@@ -112,7 +83,10 @@ function renderNodes(file) {
             // render nodes
 
 
-            var nodesDom = graph.append("g")
+            linksDom = graph.append("g")
+                .attr("id", "links");
+
+            nodesDom = graph.append("g")
                 .attr("id", "nodes");
 
 
@@ -147,28 +121,109 @@ function renderNodes(file) {
                     .attr("fill", "rgb(" + (r + inc) + "," + (g + inc) + "," + (b + inc) + ")") //2B5D85(darker) C4FFF6 BCF5EC  A9DED9
                 ;
 
-
-                /*
-                 graph.append("text")
-                 .attr("x", node.pos.x)
-                 .attr("y", node.pos.y)
-                 .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
-                 .attr("font-size", 10);
-                 ;
-
-                 */
             });
         }
     }
 
 }
 
+function getLinksAndRender(file) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", file, true);
+    xhr.responseType = "arraybuffer";
+    xhr.send();
 
+    xhr.onreadystatechange = function () {
+        var rawBuffer = xhr.response;
+
+        if (rawBuffer)
+            var data = new Float32Array(rawBuffer);  // will auto-format buffer, and convert byte into float array
+
+        if (data) {    // data may not be ready the first time this function is called
+
+            // links = [[x1, y1, x2, y2], [], ...]
+            links = [];
+
+            // read links data and add each link onto array
+            for (var i = 0; i < data.length - 3; i += 4) {
+                links.push([data[i], data[i + 1], data[i + 2], data[i + 3]]);
+            }
+
+            // scale each link based on browser dimension
+            links.forEach(function (link) {
+
+                link[0] *= scales.x * scaleDown;
+                link[1] *= scales.y * scaleDown;
+                link[2] *= scales.x * scaleDown;
+                link[3] *= scales.y * scaleDown;
+
+                link[0] += containerDimension.width * (1 - scaleDown) / 2;
+                link[1] += containerDimension.height * (1 - scaleDown) / 2;
+                link[2] += containerDimension.width * (1 - scaleDown) / 2;
+                link[3] += containerDimension.height * (1 - scaleDown) / 2;
+            });
+
+            // render edges
+            renderLinks();
+        }
+
+    };
+}
+
+renderLinks = function () {
+
+    links.forEach(function (link) {
+
+        linksDom.append("line")
+            .attr("x1", link[0])
+            .attr("y1", link[1])
+            .attr("x2", link[2])
+            .attr("y2", link[3])
+            .attr("stroke-width", 1)
+            .attr("stroke", "#333"); //B8B8B8
+    });
+
+}
+
+
+renderLabels = function () {
+    var labelsDom = document.getElementById("labels");
+
+    nodes.forEach(function (node) {
+
+        labelsDom.append("text")
+            .attr("x", node[0] + 2)
+            .attr("y", node[1] - 2)
+            .text("(" + (node[0]).toFixed(0) + ", " + (node[1]).toFixed(0) + ")")
+            .attr("font-size", 10)
+            .attr("fill", "white");
+    });
+}
+
+
+highlight = function () {
+
+    console.log("highlight is called");
+
+    var highlightDom = document.getElementById("highlight");
+    for (var i = 0; i < 10; ++i) {
+        var node = nodes[i];
+        highlightDom.append("circle")
+            .attr("r", 3)
+            .attr("cx", node[0])
+            .attr("cy", node[1])
+            .attr("fill", "#CF2331")
+        ;
+    }
+
+}
+
+/*
 
 var data, nodes, links, rectDimension;
 
 
-//renderInput("output.json");
+ renderInput("output.json");
 
 
 // get data from server
@@ -194,11 +249,6 @@ function renderInput(file) {
                 height: document.body.clientHeight - 100
             }
 
-            /*
-             // overwrite containerDimension TODO: Delete later!
-             containerDimension.width = 800;
-             containerDimension.height = 500;
-             */
 
             var scales = {
                 x: containerDimension.width / rectDimension.width,
@@ -308,15 +358,6 @@ function renderInput(file) {
                 ;
 
 
-                /*
-                 graph.append("text")
-                 .attr("x", node.pos.x)
-                 .attr("y", node.pos.y)
-                 .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
-                 .attr("font-size", 10);
-                 ;
-
-                 */
             });
 
 
@@ -393,3 +434,4 @@ highlight = function () {
 }
 
 
+ */
