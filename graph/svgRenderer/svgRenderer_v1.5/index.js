@@ -1,6 +1,175 @@
 var svg = require('simplesvg');
-var interactiveControl = require('svg-pan-zoom')
+
+
+/* for reading binary files later on
+ https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
+
+ var oReq = new XMLHttpRequest();
+ oReq.open("GET", "/myfile.png", true);
+ oReq.responseType = "arraybuffer";
+
+ oReq.onload = function (oEvent) {
+ var arrayBuffer = oReq.response; // Note: not oReq.responseText
+ if (arrayBuffer) {
+ var byteArray = new Uint8Array(arrayBuffer);
+ for (var i = 0; i < byteArray.byteLength; i++) {
+ // do something with each byte in the array
+ }
+ }
+ };
+
+ oReq.send(null);
+
+ */
+
+renderNodes("nodesPos.bin");
+
+// new optimised rendering, to read from binary pos files
+function renderNodes(file) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", file, true);
+    xhr.responseType = "arraybuffer";
+    xhr.send();
+
+    xhr.onreadystatechange = function () {
+        var rawBuffer = xhr.response;
+
+        if (rawBuffer)
+            var data = new Float32Array(rawBuffer);  // will auto-format buffer, and convert byte into float array
+
+        if (data) {    // data may not be ready the first time this function is called
+
+            // rectDimension = [width, height]
+            var rectDimension = [data[0], data[1]];
+
+            // nodes = [[x, y, numLinks], [], ...]
+            var nodes = [];
+
+            for (var i = 2; i < data.length - 2; i += 3) {
+                nodes.push([data[i], data[i + 1], data[i + 2]]);
+            }
+
+            /*
+             console.log("rectDimension width: " + rectDim[0]);
+             console.log("rectDimension height: " + rectDim[1]);
+             console.log("nodes length: " + nodes.length);
+             console.log("nodes data: ")
+             console.log(nodes);
+             */
+
+            // transform data: instead of transforming SVG elements, transform coordinates instead
+            // also set up container for graph
+            var containerDimension = {
+                width: document.body.clientWidth,
+                height: document.body.clientHeight - 100
+            }
+
+            /*
+             // overwrite containerDimension TODO: Delete later!
+             containerDimension.width = 800;
+             containerDimension.height = 500;
+             */
+
+            var scales = {
+                x: containerDimension.width / rectDimension[0],
+                y: containerDimension.height / rectDimension[1]
+            };
+
+
+            // scaleDown  makes the overall graph smaller and nearer to (0, 0)
+            var scaleDown = 0.9;
+
+            nodes.forEach(function (node) {
+
+                node[0] *= scales.x * scaleDown;
+                node[1] *= scales.y * scaleDown;
+
+                node[0] += containerDimension.width * (1 - scaleDown) / 2;    // add padding to x & y to centralise graph
+                node[1] += containerDimension.height * (1 - scaleDown) / 2;
+            });
+
+
+            // rendering
+            // set up svgRoot
+            var svgRoot = svg("svg");
+
+            document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
+
+
+            svgRoot.attr("width", containerDimension.width) //containerDimension.width
+                .attr("height", containerDimension.height)     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
+                .attr("viewBox", "0 0 " + containerDimension.width + " " + containerDimension.height)    // this is accessed by pan; so needs to be defined at the start
+                .attr("id", "graph");
+
+            var graph = svgRoot.append("g");
+
+
+            console.log("Time before rendering: " + window.performance.now());
+            window.performance.mark("mark_before_append");
+
+            // rendering
+
+            // render nodes
+
+
+            var nodesDom = graph.append("g")
+                .attr("id", "nodes");
+
+
+            // create g to group a highlighted DOM
+            graph.append("g")
+                .attr("id", "highlight");
+
+            graph.append("g")
+                .attr("id", "labels");
+
+
+            var r, g, b;  // r 50 g 100 b 0 (lime green); r 0 g 50 b 100 (nice blue); r 50, g 100, b 50 (pastel green)
+            r = 0;  //
+            g = 50;
+            b = 20;   // range is 0 to 255
+
+
+            var maxLinks = nodes.length / 10;
+            var maxRGB = Math.max(r, g, b);
+            console.log(maxRGB);
+            var rgbIncrement = (255 - maxRGB) / maxLinks; //amount of increment remaining divide by no. of possible links (to know how much to increase for every increase in link)
+            console.log(rgbIncrement);
+
+            nodes.forEach(function (node) {
+
+                var inc = Math.round(rgbIncrement * node[2]);
+
+                nodesDom.append("circle")
+                    .attr("r", 3)
+                    .attr("cx", node[0])
+                    .attr("cy", node[1])
+                    .attr("fill", "rgb(" + (r + inc) + "," + (g + inc) + "," + (b + inc) + ")") //2B5D85(darker) C4FFF6 BCF5EC  A9DED9
+                ;
+
+
+                /*
+                 graph.append("text")
+                 .attr("x", node.pos.x)
+                 .attr("y", node.pos.y)
+                 .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
+                 .attr("font-size", 10);
+                 ;
+
+                 */
+            });
+        }
+    }
+
+}
+
+
+
 var data, nodes, links, rectDimension;
+
+
+//renderInput("output.json");
+
 
 // get data from server
 function renderInput(file) {
@@ -175,8 +344,6 @@ function renderInput(file) {
 
 }
 
-renderInput("output.json");
-
 
 renderLinks = function () {
     var linksDom = document.getElementById("links");
@@ -226,23 +393,3 @@ highlight = function () {
 }
 
 
-/* for reading binary files later on
- https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
-
- var oReq = new XMLHttpRequest();
- oReq.open("GET", "/myfile.png", true);
- oReq.responseType = "arraybuffer";
-
- oReq.onload = function (oEvent) {
- var arrayBuffer = oReq.response; // Note: not oReq.responseText
- if (arrayBuffer) {
- var byteArray = new Uint8Array(arrayBuffer);
- for (var i = 0; i < byteArray.byteLength; i++) {
- // do something with each byte in the array
- }
- }
- };
-
- oReq.send(null);
-
- */
