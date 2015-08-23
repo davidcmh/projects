@@ -54,15 +54,14 @@ for (var i = 0; i < gdoDimension.row; ++i) {
 // set up svgRoot
 var svgRoot = svg("svg");
 
-var graph = svgRoot.append("g");
 //.attr("transform", "translate(" + translate.x + "," + translate.y + ")")
 //.attr("id", partitionPos[0] + "_" + partitionPos[1]);
 
-var linksDom = graph.append("g")
-    .attr("class", "links");
+var linksDom = svgRoot.append("g")
+    .attr("id", "links");
 
-var nodesDom = graph.append("g")
-    .attr("class", "nodes");
+var nodesDom = svgRoot.append("g")
+    .attr("id", "nodes");
 
 document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
 
@@ -127,9 +126,9 @@ function renderNodes(file) {
 
             var maxLinks = 5;
             var maxRGB = Math.max(r, g, b);
-            console.log(maxRGB);
+            //console.log(maxRGB);
             var rgbIncrement = (255 - maxRGB) / maxLinks; //amount of increment remaining divide by no. of possible links (to know how much to increase for every increase in link)
-            console.log(rgbIncrement);
+            //console.log(rgbIncrement);
 
             nodes.forEach(function (node) {
 
