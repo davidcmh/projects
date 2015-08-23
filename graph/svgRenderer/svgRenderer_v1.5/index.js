@@ -118,21 +118,25 @@ function renderInput(file) {
             var r, g, b;  // r 50 g 100 b 0 (lime green); r 0 g 50 b 100 (nice blue); r 50, g 100, b 50 (pastel green)
             r = 0;  //
             g = 50;
-            b = 20;
+            b = 20;   // range is 0 to 255
+
+
+            var maxLinks = nodes.length / 10;
+            var maxRGB = Math.max(r, g, b);
+            console.log(maxRGB);
+            var rgbIncrement = (255 - maxRGB) / maxLinks; //amount of increment remaining divide by no. of possible links (to know how much to increase for every increase in link)
+            console.log(rgbIncrement);
 
             nodes.forEach(function (node) {
 
+                var inc = Math.round(rgbIncrement * node.adj);
 
                 nodesDom.append("circle")
                     .attr("r", 3)
                     .attr("cx", node.pos.x)
                     .attr("cy", node.pos.y)
-                    .attr("fill", "rgb(" + r + "," + g + "," + b + ")") //2B5D85(darker) C4FFF6 BCF5EC  A9DED9
+                    .attr("fill", "rgb(" + (r + inc) + "," + (g + inc) + "," + (b + inc) + ")") //2B5D85(darker) C4FFF6 BCF5EC  A9DED9
                 ;
-
-                r += 2;
-                g += 2;
-                b += 2;
 
 
                 /*
@@ -222,4 +226,23 @@ highlight = function () {
 }
 
 
+/* for reading binary files later on
+ https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
 
+ var oReq = new XMLHttpRequest();
+ oReq.open("GET", "/myfile.png", true);
+ oReq.responseType = "arraybuffer";
+
+ oReq.onload = function (oEvent) {
+ var arrayBuffer = oReq.response; // Note: not oReq.responseText
+ if (arrayBuffer) {
+ var byteArray = new Uint8Array(arrayBuffer);
+ for (var i = 0; i < byteArray.byteLength; i++) {
+ // do something with each byte in the array
+ }
+ }
+ };
+
+ oReq.send(null);
+
+ */
