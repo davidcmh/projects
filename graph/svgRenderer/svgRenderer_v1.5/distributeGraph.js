@@ -10,14 +10,14 @@
 // TODO: change attributes of display dimension from x, y to width, height; which are more accurate descriptors
 var settings = {
     defaultDisplayDimension: {
-        x: 700,
-        y: 400
+        x: 175,
+        y: 100
     }
 }
 
 var gdoDimension = {
-    row: 2,
-    col: 2
+    row: 8,
+    col: 8
 };
 
 

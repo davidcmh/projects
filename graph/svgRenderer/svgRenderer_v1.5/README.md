@@ -8,6 +8,15 @@ Implementations:
     - linkPos.bin stores data in byte array. for each link, it store x, y positions for start and end points.
     - nodes.json stores all information of each node: {id, pos, connected nodes}
     - labels.json stores labels for each node: {id, label}
+    - linksDistribution.json: record distribution of no. of links for all nodes
+
+2. distributeGraph.js
+- Partition raw data into buckets based on specified dimension and write into individual partition file
+- Reads nodesPos.bin and outputs each partition into distributedData/nodes/row_col.bin
+- tested 2x2, 4x4, 8x8, all works perfectly :)
+
+3. index.js & renderer.js
+- implements functions to read from binary files
 
 
 #Earlier versions:
