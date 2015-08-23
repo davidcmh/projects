@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: black;
+            position: fixed;
+        }
+
+        body {
+            margin: 0;
+            padding-left: 2;
+            padding-right: 2;
+
+        }
+
+        #message_from_server {
+            width: 99%;
+            height: 60px;
+            overflow: auto;
+            color: #888;
+            margin-top: 2px;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: 5px;
+            margin-right: 0;
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+            font-family: "verdana";
+            font-size: 12px;
+        }
+
+        label {
+            font-family: "verdana";
+            font-size: 12px;
+            color: white;
+            margin-left: 5px;
+        }
+
+    </style>
+    <script>
+
+        // renderLinks defined here, so its function defined in index.js/renderer.js can be accessed globally
+        var renderLinks;
+
+
+        var removeLinks = function () {
+            var linksDom = document.getElementById("links");
+
+            while (linksDom.firstChild) {
+                linksDom.removeChild(linksDom.firstChild);
+            }
+        }
+
+
+        var renderLabels;
+
+
+        var removeLabels = function () {
+            var labelsDom = document.getElementById("labels");
+
+            while (labelsDom.firstChild) {
+                labelsDom.removeChild(labelsDom.firstChild);
+            }
+        }
+
+        //this crashes the code
+        var changeColour = function () {
+            var linksDom = document.getElementById("links");
+
+            while (linksDom.firstChild) {
+                linksDom.setAttribute("stroke", "black");
+            }
+        }
+
+
+        var checked = true;
+
+        var updateLinks = function () {
+            if (checked) {
+                removeLinks();
+                checked = false;
+            } else {
+                renderLinks();
+                checked = true;
+            }
+        }
+
+
+        window.addEventListener('keydown', processKeyPress, true);
+
+        /* Constants: */
+        var leftArrow = 37;	// Key code for the left arrow key.
+        var upArrow = 38;
+        var rightArrow = 39;
+        var downArrow = 40;
+        var panRate = 10;	// Number of pixels to pan per key press.
+
+        /* Global variables: */
+        var theSvgElement;
+
+        function processKeyPress(evt) {
+
+            theSvgElement = document.getElementById("graph");
+
+            var viewBox = theSvgElement.getAttribute('viewBox');	// Grab the object representing the SVG element's viewBox attribute.
+            var viewBoxValues = viewBox.split(' ');				// Create an array and insert each individual view box attribute value (assume they're separated by a single whitespace character).
+
+            /* The array is filled with strings, convert the first two viewBox values to floats: */
+            viewBoxValues[0] = parseFloat(viewBoxValues[0]);	// Represent the x-coordinate on the viewBox attribute.
+            viewBoxValues[1] = parseFloat(viewBoxValues[1]);	// Represent the y coordinate on the viewBox attribute.
+
+            switch (evt.keyCode) {
+                case leftArrow:
+                    viewBoxValues[0] += panRate;	// Increase the x-coordinate value of the viewBox attribute by the amount given by panRate.
+                    break;
+                case rightArrow:
+                    viewBoxValues[0] -= panRate;	// Decrease the x-coordinate value of the viewBox attribute by the amount given by panRate.
+                    break;
+                case upArrow:
+                    viewBoxValues[1] += panRate;	// Increase the y-coordinate value of the viewBox attribute by the amount given by panRate.          break;
+                    break;
+                case downArrow:
+                    viewBoxValues[1] -= panRate;	// Decrease the y-coordinate value of the viewBox attribute by the amount given by panRate.          break;
+                    break;
+            } // switch
+
+            theSvgElement.setAttribute('viewBox', viewBoxValues.join(' '));	// Convert the viewBoxValues array into a string with a white space character between the given values.
+        }
+
+        var num = 0;
+        var y = 0;
+        var addLog = function () {
+            var logDom = document.getElementById("message_from_server");
+
+            var para = document.createElement("p");
+            para.textContent = ">> Added log no. " + num++;
+            logDom.appendChild(para);
+            y += 30;
+            //logDom.scrollIntoView(false);
+
+            /*
+             if (num > 5) {
+             scroll_to(logDom);
+             }
+             */
+            scroll_to(logDom);
+
+        }
+
+        function scroll_to(div) {
+            /*
+             if (div.scrollTop < div.scrollHeight - div.clientHeight)
+             div.scrollTop += 40; // move down
+             */
+
+            if (div.scrollHeight > div.clientHeight)
+                div.scrollTop = div.scrollHeight - div.clientHeight;
+
+        }
+
+
+        var zoomIn = function () {
+            var svgElement = document.getElementById("graph");
+
+
+            svgElement.setAttribute("viewBox", document.body.clientWidth / 4 + " " + (document.body.clientHeight - 100) / 4 + " " + document.body.clientWidth / 2 + " " + (document.body.clientHeight - 100) / 2);
+        };
+
+        var zoomOut = function () {
+            var svgElement = document.getElementById("graph");
+
+
+            svgElement.setAttribute("viewBox", -document.body.clientWidth / 2 + " " + -(document.body.clientHeight - 100) / 2 + " " + document.body.clientWidth * 2 + " " + (document.body.clientHeight - 100) * 2);
+        };
+
+        var resetZoom = function () {
+            var svgElement = document.getElementById("graph");
+
+
+            svgElement.setAttribute("viewBox", 0 + " " + 0 + " " + document.body.clientWidth + " " + (document.body.clientHeight - 100));
+        };
+
+
+        var highlight;
+
+        var removeHighlight = function () {
+            var dom = document.getElementById("highlight");
+
+            while (dom.firstChild) {
+                dom.removeChild(dom.firstChild);
+            }
+        }
+
+        /* canvas rendering test
+         var c=document.getElementById("canvasTest");
+         var ctx=c.getContext("2d");
+         ctx.beginPath();
+         ctx.moveTo(0,0);
+         ctx.lineTo(300,150);
+         ctx.stroke();
+         */
+    </script>
+
+</head>
+
+<body>
+
+
+<script src="bundle.js"></script>
+
+<label>Links</label>
+<input type="checkbox" checked onchange="updateLinks()"> </input>
+
+<button onclick="renderLinks()">Add links</button>
+<button onclick="removeLinks()">Remove links</button>
+
+<button onclick="renderLabels()">Add labels</button>
+<button onclick="removeLabels()">Remove labels</button>
+
+<!-- this crashes the browser (maybe cos changing too many DOM elements)
+<button onclick="changeColour()">Change colour</button>
+-->
+
+<!-- <button onclick="panLeft()">Pan Left</button> -->
+
+<button onclick="zoomIn()">Zoom in</button>
+<button onclick="zoomOut()">Zoom out</button>
+<button onclick="resetZoom()">Reset zoom</button>
+
+<button onclick="addLog()">Add log</button>
+
+<button onclick="highlight()">Highlight nodes</button>
+<button onclick="removeHighlight()">Remove highlight</button>
+
+
+<fieldset id="message_from_server"></fieldset>
+
+
+</body>
+
+</html>
