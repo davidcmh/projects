@@ -2,7 +2,7 @@
  1. Set up dimensions of individual display and overall display config
  2. Read file and get data: nodes, links, rectDimension
  3. Distribute graph
- i. scale to overall dimension
+ i. scale to overall dimension [DONE]
  ii. distribute nodes & links into each browser
  iii. write data for individual browser into files
  */
@@ -16,8 +16,8 @@ var settings = {
 }
 
 var gdoDimension = {
-    row: 3,
-    col: 3
+    row: 2,
+    col: 2
 };
 
 
@@ -27,6 +27,8 @@ var totalGdoDimension = {
 }
 
 var scales;
+// scaleDown  makes the overall graph smaller and nearer to (0, 0)
+var scaleDown = 0.9;
 
 var fs = require('fs');
 
@@ -55,9 +57,8 @@ fs.readFile("nodesPos.bin", function (err, data) {
      console.log("nodes data: ")
      console.log(nodes);
      */
-    setupScales(rectDim);
 
-    //distributeNodes(rectDim, nodes);
+    distributeNodes(rectDim, nodes);
 
 })
 
@@ -81,8 +82,82 @@ fs.readFile("linksPos.bin", function (err, data) {
      console.log(links);
      */
 
+    /*
+     console.log("original links data");
+     console.log(links);
+     */
+
+    // scale nodes
+    var scaledLinks = scaleLinks(links);
+    links = scaledLinks;
+
+    /*
+     console.log("scaled links data");
+     console.log(links);
+     */
+
 })
 
+
+// @param rectDim = [width, height], nodes = [[x, y, numLinks], [], ...]
+function distributeNodes(rectDim, nodes) {
+    setupScales(rectDim);
+
+    /*
+     console.log("original nodes data");
+     console.log(nodes);
+     */
+
+    // 1. scale nodes
+    var scaledNodes = scaleNodes(nodes);
+    nodes = scaledNodes;
+
+    /*
+     console.log("scaled nodes data");
+     console.log(nodes);
+     */
+
+    // 2. distribute nodes
+
+    // distribute data across different browsers
+    // set up data structure to store data for each browser
+    var partitionNodes = [];
+    for (var i = 0; i < gdoDimension.row; ++i) {
+        partitionNodes[i] = [];
+        for (var j = 0; j < gdoDimension.col; ++j) {
+            partitionNodes[i][j] = {
+                browserPos: {     // store position of browser
+                    row: i,
+                    col: j
+                },
+                nodes: []     // array to store nodes data
+            };
+        }
+        ;
+    }
+    ;
+
+    // distribute nodes (place each node into respective parition
+
+    /*
+     console.log("Original partition nodes: ")
+     console.log(partitionNodes);
+     */
+
+    nodes.forEach(function (node) {
+        var nodeBrowserPos = checkBrowserPos(node);
+        partitionNodes[nodeBrowserPos.row][nodeBrowserPos.col].nodes.push(node);
+    });
+
+    /*
+     console.log("After adding nodes: ")
+     console.log(partitionNodes);
+     console.log(partitionNodes[1][1]);
+     */
+
+    // 3. write data to individual partition file; stored in distributedData/nodesPos/
+    writePartitionNodes(partitionNodes);
+}
 
 // set up scales for transformation
 function setupScales(rectDim) {
@@ -99,16 +174,83 @@ function setupScales(rectDim) {
      console.log("scales: ");
      console.log(scales);
      */
-}
-
-
-// @param rectDim = [width, height], nodes = [[x, y, numLinks], [], ...]
-function distributeNodes(rectDim, nodes) {
 
 }
 
+function scaleNodes(nodes) {
+    nodes.forEach(function (node) {
 
-var data, nodes, links, rectDimension;
+        node[0] *= scales.x * scaleDown;
+        node[1] *= scales.y * scaleDown;
+
+        node[0] += totalGdoDimension.width * (1 - scaleDown) / 2;    // add padding to x & y to centralise graph
+        node[1] += totalGdoDimension.height * (1 - scaleDown) / 2;
+    });
+
+    return nodes;
+}
+
+
+function scaleLinks(links) {
+
+    links.forEach(function (link) {
+        link[0] *= scales.x * scaleDown;
+        link[1] *= scales.y * scaleDown;
+        link[2] *= scales.x * scaleDown;
+        link[3] *= scales.y * scaleDown;
+
+        link[0] += totalGdoDimension.width * (1 - scaleDown) / 2;
+        link[1] += totalGdoDimension.height * (1 - scaleDown) / 2;
+        link[2] += totalGdoDimension.width * (1 - scaleDown) / 2;
+        link[3] += totalGdoDimension.height * (1 - scaleDown) / 2;
+    });
+
+    return links;
+}
+
+
+// check which browser a point belongs to
+function checkBrowserPos(pos) {
+    return {
+        row: Math.floor(pos[1] / settings.defaultDisplayDimension.y),  // be careful of the inversion btw x & y!
+        col: Math.floor(pos[0] / settings.defaultDisplayDimension.x)
+    }
+}
+
+function writePartitionNodes(partitionNodes) {
+    for (var i = 0; i < gdoDimension.row; ++i) {
+        for (var j = 0; j < gdoDimension.col; ++j) {
+
+            // 1. set up buffer and offset for each file
+            var nodesCount = partitionNodes[i][j].nodes.length;
+            var nodesBuf = new Buffer(nodesCount * 12 + 8);   // 4 + 4 + 4 bytes for x, y position & no. of connected nodes; 8 extra bytes to record partition pos
+            var offset = 0;   // offset for buffer
+
+
+            // 2. add data to buffer: browserPos (row, col), followed by each node's positions & numLinks
+            nodesBuf.writeFloatLE(i, offset);
+            nodesBuf.writeFloatLE(j, offset + 4);
+            offset += 8;
+
+            (partitionNodes[i][j].nodes).forEach(function (node) {
+
+                nodesBuf.writeFloatLE(node[0], offset);
+                nodesBuf.writeFloatLE(node[1], offset + 4);
+                nodesBuf.writeFloatLE(node[2], offset + 8);
+
+                offset += 12;
+            });
+
+            // write into file
+            fs.writeFileSync("distributedData/nodesPos/" + i + "_" + j + ".bin", nodesBuf);
+        }
+    }
+}
+
+
+/*
+
+ var data, nodes, links, rectDimension;
 
 // reads from output.json
 
@@ -138,11 +280,9 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
 
     // TODO: Refactor scaling, since it's used in both distributeGraph.js and index.js
-    // scaleDown  makes the overall graph smaller and nearer to (0, 0)
-    var scaleDown = 0.9;
 
-    nodes.forEach(function (node) {
 
+ nodes.forEach(function (node) {
         node.pos.x *= scales.x * scaleDown;
         node.pos.y *= scales.y * scaleDown;
 
@@ -150,7 +290,8 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
         node.pos.y += totalGdoDimension.height * (1 - scaleDown) / 2;
     });
 
-    links.forEach(function (link) {
+
+ links.forEach(function (link) {
 
         link.pos.from.x *= scales.x * scaleDown;
         link.pos.from.y *= scales.y * scaleDown;
@@ -348,3 +489,4 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
 
 }
+ */
