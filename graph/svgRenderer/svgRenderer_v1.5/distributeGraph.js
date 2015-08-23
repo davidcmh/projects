@@ -15,14 +15,103 @@ var settings = {
     }
 }
 
-var data, nodes, links, rectDimension;
-
 var gdoDimension = {
     row: 3,
     col: 3
 };
 
+
+var totalGdoDimension = {
+    width: gdoDimension.col * settings.defaultDisplayDimension.x,
+    height: gdoDimension.row * settings.defaultDisplayDimension.y
+}
+
+var scales;
+
 var fs = require('fs');
+
+
+// reads from nodesPos.bin
+
+fs.readFile("nodesPos.bin", function (err, data) {
+    if (err)
+        throw err;
+
+
+    // rectDimension = [width, height]
+    var rectDim = [data.readFloatLE(0), data.readFloatLE(4)];
+
+    // nodes = [[x, y, numLinks], [], ...]
+    var nodes = [];
+
+    for (var i = 8; i < data.length; i += 12) {
+        nodes.push([data.readFloatLE(i), data.readFloatLE(i + 4), data.readFloatLE(i + 8)]);
+    }
+
+    /*
+     console.log("rectDimension width: " + rectDim[0]);
+     console.log("rectDimension height: " + rectDim[1]);
+     console.log("nodes length: " + nodes.length);
+     console.log("nodes data: ")
+     console.log(nodes);
+     */
+    setupScales(rectDim);
+
+    //distributeNodes(rectDim, nodes);
+
+})
+
+
+// reads from linksPos.bin
+
+fs.readFile("linksPos.bin", function (err, data) {
+    if (err)
+        throw err;
+
+    // links = [[x1, y1, x2, y2], [], ...]
+    var links = [];
+
+    for (var i = 0; i < data.length; i += 16) {
+        links.push([data.readFloatLE(i), data.readFloatLE(i + 4), data.readFloatLE(i + 8), data.readFloatLE(i + 12)]);
+    }
+
+    /*
+     console.log("links length: " + links.length);
+     console.log("links data: ")
+     console.log(links);
+     */
+
+})
+
+
+// set up scales for transformation
+function setupScales(rectDim) {
+    scales = {
+        x: totalGdoDimension.width / rectDim[0],
+        y: totalGdoDimension.height / rectDim[1]
+    };
+
+    /*
+     console.log("total gdo dimension: ");
+     console.log(totalGdoDimension);
+     console.log("rect dimension: ");
+     console.log(rectDim);
+     console.log("scales: ");
+     console.log(scales);
+     */
+}
+
+
+// @param rectDim = [width, height], nodes = [[x, y, numLinks], [], ...]
+function distributeNodes(rectDim, nodes) {
+
+}
+
+
+var data, nodes, links, rectDimension;
+
+// reads from output.json
+
 fs.readFile("output.json", function read(err, data) {
     if (err) {
         throw err;
@@ -47,15 +136,6 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
     // transform data to GDO dimension
 
-    var totalGdoDimension = {
-        width: gdoDimension.col * settings.defaultDisplayDimension.x,
-        height: gdoDimension.row * settings.defaultDisplayDimension.y
-    }
-
-    var scales = {
-        x: totalGdoDimension.width / rectDimension.width,
-        y: totalGdoDimension.height / rectDimension.height
-    };
 
     // TODO: Refactor scaling, since it's used in both distributeGraph.js and index.js
     // scaleDown  makes the overall graph smaller and nearer to (0, 0)
@@ -174,30 +254,11 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
         // 2. both in different browsers, but on the same row or same col
         // 3. both in different browsers, diff row and diff col
 
-        // check for intersections & place into respective browsers
-
-        // calculate line equation y = mx + c
-        var m = (endPos.y - startPos.y) / (endPos.x - startPos.x);
-        var c = startPos.y - (m * startPos.x);
-
-
         if (rowDiff != 0 && colDiff == 0) {
             // no colDiff means all are on same column, but different rows
             if (rowDiff > 0) {
                 for (var i = 0; i < rowDiff; ++i) {
-                    //partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(link);
-
-                    // no change in x
-                    // sLink stands for shortened link, to fit into a single browser
-                    sLink.pos.from.y *= 0;
-                    sLink.pos.to.y *= 0;
-                    sLink.pos.from.x *= link.pos.from.x;
-                    sLink.pos.to.x *= link.pos.to.x;
-
-
-                    partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(sLink);
-
-
+                    partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(link);
                 }
             } else { //rowDiff < 0
                 for (var i = -rowDiff; i > 0; --i) {  // previous bug, didn't put - in front of rowDiff, this condition will always be false, since rowDiff is negative at the start
@@ -209,10 +270,14 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
                 partitionData[startBrowserPos.row][startBrowserPos.col + 1 + i].links.push(link);
             }
         } else if (rowDiff != 0 && colDiff != 0) {
+            // check for intersections & place into respective browsers
+
+            // calculate line equation y = mx + c
+            var m = (endPos.y - startPos.y) / (endPos.x - startPos.x);
+            var c = startPos.y - (m * startPos.x);
 
             // get intersection points
             var intersections = [];
-
 
             horizontalLines.forEach(function (y) { // y = ' '; hence check for x
                 intersections.push({
@@ -253,14 +318,6 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             for (var i = 0; i < intersections.length - 1; ++i) {  // intersections.length - 1 because the loop handles two intersections at a time
 
                 if (intersections[i].type == "vertical" && intersections[i + 1].type == "horizontal") {
-                    var sLink = {
-                        data: link.data,
-                        fromId: link.fromId,
-                        toId: link.toId,
-                        pos: layout.getLinkPosition(link.id)
-                    }
-
-
                     partitionData[intersections[i].number][intersections[i + 1].number].links.push(link);
                 } else if (intersections[i].type == "horizontal" && intersections[i + 1].type == "vertical") {
                     partitionData[intersections[i + 1].number][intersections[i].number].links.push(link);
@@ -274,7 +331,7 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             }
             ;
 
-            // 
+            //
             partitionData[endBrowserPos.row][endBrowserPos.col].links.push(link);
 
         }
