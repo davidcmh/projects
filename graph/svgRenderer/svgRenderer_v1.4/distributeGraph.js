@@ -174,30 +174,11 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
         // 2. both in different browsers, but on the same row or same col
         // 3. both in different browsers, diff row and diff col
 
-        // check for intersections & place into respective browsers
-
-        // calculate line equation y = mx + c
-        var m = (endPos.y - startPos.y) / (endPos.x - startPos.x);
-        var c = startPos.y - (m * startPos.x);
-
-
         if (rowDiff != 0 && colDiff == 0) {
             // no colDiff means all are on same column, but different rows
             if (rowDiff > 0) {
                 for (var i = 0; i < rowDiff; ++i) {
-                    //partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(link);
-
-                    // no change in x
-                    // sLink stands for shortened link, to fit into a single browser
-                    sLink.pos.from.y *= 0;
-                    sLink.pos.to.y *= 0;
-                    sLink.pos.from.x *= link.pos.from.x;
-                    sLink.pos.to.x *= link.pos.to.x;
-
-
-                    partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(sLink);
-
-
+                    partitionData[startBrowserPos.row + 1 + i][startBrowserPos.col].links.push(link);
                 }
             } else { //rowDiff < 0
                 for (var i = -rowDiff; i > 0; --i) {  // previous bug, didn't put - in front of rowDiff, this condition will always be false, since rowDiff is negative at the start
@@ -209,10 +190,14 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
                 partitionData[startBrowserPos.row][startBrowserPos.col + 1 + i].links.push(link);
             }
         } else if (rowDiff != 0 && colDiff != 0) {
+            // check for intersections & place into respective browsers
+
+            // calculate line equation y = mx + c
+            var m = (endPos.y - startPos.y) / (endPos.x - startPos.x);
+            var c = startPos.y - (m * startPos.x);
 
             // get intersection points
             var intersections = [];
-
 
             horizontalLines.forEach(function (y) { // y = ' '; hence check for x
                 intersections.push({
@@ -253,14 +238,6 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             for (var i = 0; i < intersections.length - 1; ++i) {  // intersections.length - 1 because the loop handles two intersections at a time
 
                 if (intersections[i].type == "vertical" && intersections[i + 1].type == "horizontal") {
-                    var sLink = {
-                        data: link.data,
-                        fromId: link.fromId,
-                        toId: link.toId,
-                        pos: layout.getLinkPosition(link.id)
-                    }
-
-
                     partitionData[intersections[i].number][intersections[i + 1].number].links.push(link);
                 } else if (intersections[i].type == "horizontal" && intersections[i + 1].type == "vertical") {
                     partitionData[intersections[i + 1].number][intersections[i].number].links.push(link);
@@ -274,7 +251,7 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
             }
             ;
 
-            // 
+            //
             partitionData[endBrowserPos.row][endBrowserPos.col].links.push(link);
 
         }
@@ -291,3 +268,4 @@ function distributeGraph(gdoDimension) {     //gdoDimension = {row: , col: }
 
 
 }
+
