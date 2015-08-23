@@ -1,8 +1,133 @@
-// now supports reading two input files
-// TODO: refactor code
-
 var svg = require('simplesvg');
-var data, nodes, links, browserPos, graph;
+
+
+/* Optimised split rendering
+ 1. Read individual partition (no need to scale, since it's already scaled in distributeGraph)
+ 2. translate by respective
+ 3. render (each browser now renders 4 partitions, 2 x 2)
+ */
+
+
+var containerDim = {
+    width: 1400,
+    height: 800
+}
+
+
+renderNodes("distributedData/nodesPos/0_0.bin");
+renderNodes("distributedData/nodesPos/0_1.bin");
+renderNodes("distributedData/nodesPos/1_0.bin");
+renderNodes("distributedData/nodesPos/1_1.bin");
+
+
+// set up svgRoot
+var svgRoot = svg("svg");
+
+document.body.appendChild(svgRoot);  //getElementById( ) can be used to substitute body
+
+svgRoot.attr("width", containerDim.width)//settings.defaultDisplayDimension.width
+    .attr("height", containerDim.height)
+    .attr("viewBox", "0 0 " + containerDim.width + " " + containerDim.height)
+    .attr("id", "graph");     // learning: height and width should be set to the overall svg canvas, instead of "g" within. It has no effect on "g"
+
+
+// new optimised rendering, to read from binary pos files
+function renderNodes(file) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", file, true);
+    xhr.responseType = "arraybuffer";
+    xhr.send();
+
+    xhr.onreadystatechange = function () {
+        var rawBuffer = xhr.response;
+
+        if (rawBuffer)
+            var data = new Float32Array(rawBuffer);  // will auto-format buffer, and convert byte into float array
+
+        if (data) {    // data may not be ready the first time this function is called
+
+            // partitionPos = [row, col]
+            var partitionPos = [data[0], data[1]];
+
+            // nodes = [[x, y, numLinks], [], ...]
+            var nodes = [];
+
+            for (var i = 2; i < data.length - 2; i += 3) {
+                nodes.push([data[i], data[i + 1], data[i + 2]]);
+            }
+
+            /*
+             console.log("partitionPos x: " + partitionPos[0]);
+             console.log("partitionPos y: " + partitionPos[1]);
+             console.log("nodes length: " + nodes.length);
+             console.log("nodes data: ")
+             console.log(nodes);
+
+             */
+
+            // rendering
+
+            var translate = {
+                x: partitionPos[1] * containerDim.width / 2,
+                y: partitionPos[0] * containerDim.height / 2
+            }
+
+            translate.x = 0;
+            translate.y = 0;
+
+            graph = svgRoot.append("g")
+                .attr("transform", "translate(" + translate.x + "," + translate.y + ")")
+                .attr("id", partitionPos[0] + "_" + partitionPos[1]);
+
+
+            // render nodes
+
+            var r, g, b;  // r 50 g 100 b 0 (lime green); r 0 g 50 b 100 (nice blue); r 50, g 100, b 50 (pastel green)
+            r = 0;  //
+            g = 50;
+            b = 20;   // range is 0 to 255
+
+
+            var maxLinks = 5;
+            var maxRGB = Math.max(r, g, b);
+            console.log(maxRGB);
+            var rgbIncrement = (255 - maxRGB) / maxLinks; //amount of increment remaining divide by no. of possible links (to know how much to increase for every increase in link)
+            console.log(rgbIncrement);
+
+            nodes.forEach(function (node) {
+
+                var inc = Math.round(rgbIncrement * node[2]);
+
+                graph.append("circle")
+                    .attr("r", 3)
+                    .attr("cx", node[0])
+                    .attr("cy", node[1])
+                    .attr("fill", "rgb(" + (r + inc) + "," + (g + inc) + "," + (b + inc) + ")") //2B5D85(darker) C4FFF6 BCF5EC  A9DED9
+                ;
+                /*
+                 graph.append("text")
+                 .attr("x", node.pos.x)
+                 .attr("y", node.pos.y)
+                 .text("(" + (node.pos.x).toFixed(0) + ", " + (node.pos.y).toFixed(0) + ")")
+                 .attr("font-size", 10);
+                 ;
+                 */
+            });
+        }
+    }
+
+}
+
+
+/*
+
+
+
+ //renderInput("distributedData/0_0.json");
+
+ //renderExtraInput("distributedData/0_1.json");
+
+ var data, nodes, links, browserPos, graph;
 var xdata, xnodes, xlinks;
 
 var settings = {
@@ -12,9 +137,6 @@ var settings = {
     }
 }
 
-renderInput("distributedData/0_0.json");
-
-renderExtraInput("distributedData/0_1.json");
 
 // get data from server
 function renderInput(file) {
@@ -178,6 +300,7 @@ function renderMainGraph() {
     // console.log(measure_all);
 }
 
+
 renderLinks = function () {
     var linksDom = document.getElementById("links");
 
@@ -194,5 +317,5 @@ renderLinks = function () {
 }
 
 
-
+ */
 
