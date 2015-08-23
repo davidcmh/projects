@@ -5,7 +5,7 @@ var createGraph = require('ngraph.graph');
 var g = createGraph();
 
 // set up nodes
-var numNodes = 5;
+var numNodes = 50;
 
 /* handled by ngraph.graph automatically when adding links
  var nodesArr = [];
@@ -31,7 +31,7 @@ console.log("before generating edges: " + (new Date).getTime());
 
 // TODO: improve edges data structure, use an adjacency matrix maybe?
 // set up edges
-var numEdges = 8;
+var numEdges = 75;
 var edgesArr = [];
 
 for (var i = 0; i < numEdges; i++) {
@@ -115,7 +115,7 @@ var rectDimension = {
 var nodesArr = [];
 var linksArr = [];
 var nodesData = [];
-
+var linksDistribution = [];
 
 g.forEachNode(function (node) {
     var nodePos = layout.getNodePosition(node.id);
@@ -156,6 +156,10 @@ g.forEachNode(function (node) {
             pos: nodePos,
             adj: linkedNodesArr
         }
+    )
+
+    linksDistribution.push(
+        linkedNodesArr.length
     )
 
 });
@@ -199,22 +203,11 @@ console.log("total time elapsed: " + (endTime - startTime));
 fs.writeFileSync("nodes.json", JSON.stringify(nodesData));
 
 
-// experiments with write/read buffer
+// output links distribution data to linksDistribution.json
+fs.writeFileSync("linksDistribution.json", JSON.stringify(linksDistribution));
 
-var arr = [1989.29, 1892.5, 910, 2899];
 
-var buf = new Buffer(16);
-var offset = 0;
-arr.forEach(function (value) {
-    buf.writeFloatLE(value, offset);
-    offset += 4
-});
 
-console.log(buf);
-
-// readFloatLE works by taking offset as input
-
-console.log(buf.readFloatLE(8));
 
 
 // process link positions into buffer and output into binary file [DONE! :D]
@@ -298,18 +291,3 @@ for (var i = 0; i < nodesCount; ++i) {
     console.log(nodesBuf.readFloatLE(readOffset + 8));
 }
 
-
-/* on how to read bin files
-
- https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
-
- $http.get('data/positions.bin', {
- responseType: 'arraybuffer'
- })
- .then(convertToPositions)
- .then(addNodesToGraph)
- .then(downloadLinks)
- .catch (reportError);
-
-
- */
